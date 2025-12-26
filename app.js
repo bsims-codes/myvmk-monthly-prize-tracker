@@ -172,11 +172,17 @@ function buildMonthTabs(state) {
     els.monthTabs.appendChild(tab);
   }
 
-  // Set selected
+  // Set selected - prefer current month on fresh load
   const preferred = state.selectedMonth;
+  const currentMonth = monthFromDate(todayISO());
+
   if (preferred && (preferred === "all" || allMonths.includes(preferred))) {
     selectedMonth = preferred;
+  } else if (currentMonth && allMonths.includes(currentMonth)) {
+    // Default to current month if available
+    selectedMonth = currentMonth;
   } else if (allMonths.length) {
+    // Fall back to most recent month
     selectedMonth = allMonths[allMonths.length - 1];
   }
 
