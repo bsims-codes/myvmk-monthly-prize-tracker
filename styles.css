@@ -320,6 +320,29 @@ select:focus, input:focus{
   color: #ffd700;
 }
 
+.quantity-controls{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.qty-quick-btn{
+  padding: 8px 16px;
+  min-width: 50px;
+}
+
+.qty-quick-btn.active{
+  border-color: rgba(122,162,255,.7);
+  background: rgba(122,162,255,.2);
+  color: var(--text);
+}
+
+.quantity-controls input[type="number"]{
+  width: 80px;
+  text-align: center;
+}
+
 .ash-row{ margin-top: 10px; }
 .note-row{ margin-top: 12px; }
 

@@ -62,6 +62,18 @@
         </div>
       </div>
 
+      <div id="quantityRow" style="margin-bottom: 14px;">
+        <label class="field-label">Quantity (for bulk entry)</label>
+        <div class="quantity-controls">
+          <button type="button" class="btn btn-secondary qty-quick-btn active" data-qty="1">1</button>
+          <button type="button" class="btn btn-secondary qty-quick-btn" data-qty="5">5</button>
+          <button type="button" class="btn btn-secondary qty-quick-btn" data-qty="10">10</button>
+          <button type="button" class="btn btn-secondary qty-quick-btn" data-qty="20">20</button>
+          <input id="customQty" type="number" min="1" max="100" value="1" style="width: 70px;" />
+        </div>
+        <p class="subtle small" id="quantityHint">Clicking a prize button will add 1 entry.</p>
+      </div>
+
       <div id="quickButtons" class="button-grid"></div>
 
       <div class="divider"></div>

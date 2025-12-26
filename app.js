@@ -16,6 +16,10 @@ const els = {
   quickButtons: document.getElementById("quickButtons"),
   quickAddHint: document.getElementById("quickAddHint"),
 
+  quantityRow: document.getElementById("quantityRow"),
+  customQty: document.getElementById("customQty"),
+  quantityHint: document.getElementById("quantityHint"),
+
   creditsRow: document.getElementById("creditsRow"),
   creditsAmount: document.getElementById("creditsAmount"),
   addCreditsBtn: document.getElementById("addCreditsBtn"),
@@ -130,6 +134,20 @@ function getSelectedKeyColor() {
 
 function getSelectedDate() {
   return els.dateInput.value || todayISO();
+}
+
+function getSelectedQuantity() {
+  const val = parseInt(els.customQty.value, 10);
+  return (Number.isFinite(val) && val >= 1) ? Math.min(val, 100) : 1;
+}
+
+function updateQuantityHint() {
+  const qty = getSelectedQuantity();
+  if (qty === 1) {
+    els.quantityHint.textContent = "Clicking a prize button will add 1 entry.";
+  } else {
+    els.quantityHint.textContent = `Clicking a prize button will add ${qty} entries.`;
+  }
 }
 
 function getMonthConfig(month) {
@@ -322,25 +340,28 @@ function addPrizeEvent({ system, keyColor = null, sitsTier = null, prizeId, priz
   const state = ensureDefaultState();
   const date = getSelectedDate();
   const month = getSelectedMonth();
+  const quantity = getSelectedQuantity();
 
-  const ev = {
-    id: cryptoId(),
-    createdAt: new Date().toISOString(),
-    date,
-    month,
-    system, // keys|sits
-    keyColor: system === "keys" ? keyColor : null,
-    sitsTier: system === "sits" ? sitsTier : null,
-    resultType: "prize",
-    prize: {
-      id: prizeId,
-      // SNAPSHOT the name at entry time so history survives renames/removals
-      name: prizeName
-    },
-    creditsAmount: null
-  };
+  for (let i = 0; i < quantity; i++) {
+    const ev = {
+      id: cryptoId(),
+      createdAt: new Date().toISOString(),
+      date,
+      month,
+      system, // keys|sits
+      keyColor: system === "keys" ? keyColor : null,
+      sitsTier: system === "sits" ? sitsTier : null,
+      resultType: "prize",
+      prize: {
+        id: prizeId,
+        // SNAPSHOT the name at entry time so history survives renames/removals
+        name: prizeName
+      },
+      creditsAmount: null
+    };
+    state.events.push(ev);
+  }
 
-  state.events.push(ev);
   state.selectedMonth = month;
   saveState(state);
 
@@ -409,21 +430,25 @@ function addAshEvent() {
   const date = getSelectedDate();
   const month = getSelectedMonth();
   const system = getSelectedSystem();
+  const quantity = getSelectedQuantity();
+  const keyColor = system === "keys" ? getSelectedKeyColor() : null;
 
-  const ev = {
-    id: cryptoId(),
-    createdAt: new Date().toISOString(),
-    date,
-    month,
-    system,
-    keyColor: system === "keys" ? getSelectedKeyColor() : null,
-    sitsTier: null,
-    resultType: "ash",
-    prize: null,
-    creditsAmount: null
-  };
+  for (let i = 0; i < quantity; i++) {
+    const ev = {
+      id: cryptoId(),
+      createdAt: new Date().toISOString(),
+      date,
+      month,
+      system,
+      keyColor,
+      sitsTier: null,
+      resultType: "ash",
+      prize: null,
+      creditsAmount: null
+    };
+    state.events.push(ev);
+  }
 
-  state.events.push(ev);
   state.selectedMonth = month;
   saveState(state);
 
@@ -832,6 +857,23 @@ function toggleTheme() {
       btn.classList.add("active");
       renderQuickAdd();
     });
+  });
+
+  // Quantity quick button selection
+  document.querySelectorAll(".qty-quick-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".qty-quick-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      els.customQty.value = btn.dataset.qty;
+      updateQuantityHint();
+    });
+  });
+
+  // Custom quantity input
+  els.customQty.addEventListener("input", () => {
+    // Deselect quick buttons when user types custom value
+    document.querySelectorAll(".qty-quick-btn").forEach(b => b.classList.remove("active"));
+    updateQuantityHint();
   });
 
   els.addCreditsBtn.addEventListener("click", addCreditsEvent);
