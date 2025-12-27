@@ -6,6 +6,7 @@
 */
 
 const STORAGE_KEY = "myvmk_prize_tracker_v1";
+const BULK_SESSION_KEY = "myvmk_bulk_session_v1";
 
 const els = {
   monthTabs: document.getElementById("monthTabs"),
@@ -38,7 +39,33 @@ const els = {
 
   themeToggle: document.getElementById("themeToggle"),
   themeIcon: document.getElementById("themeIcon"),
-  themeLabel: document.getElementById("themeLabel")
+  themeLabel: document.getElementById("themeLabel"),
+
+  // Prize Gallery elements
+  availablePrizesCard: document.getElementById("availablePrizesCard"),
+  prizeGalleryHeader: document.getElementById("prizeGalleryHeader"),
+  prizeGallery: document.getElementById("prizeGallery"),
+
+  // Bulk Session Mode elements
+  bulkSessionToggle: document.getElementById("bulkSessionToggle"),
+  bulkSessionUI: document.getElementById("bulkSessionUI"),
+  normalQuickAddUI: document.getElementById("normalQuickAddUI"),
+  bulkBatchTotal: document.getElementById("bulkBatchTotal"),
+  bulkWinsLogged: document.getElementById("bulkWinsLogged"),
+  bulkInferredAsh: document.getElementById("bulkInferredAsh"),
+  bulkWarning: document.getElementById("bulkWarning"),
+  bulkPrizeList: document.getElementById("bulkPrizeList"),
+  bulkCreditsSection: document.getElementById("bulkCreditsSection"),
+  bulkCreditsGrid: document.getElementById("bulkCreditsGrid"),
+  bulkCreditsCustomAmount: document.getElementById("bulkCreditsCustomAmount"),
+  bulkCreditsCustomQty: document.getElementById("bulkCreditsCustomQty"),
+  bulkCreditsCustomBtn: document.getElementById("bulkCreditsCustomBtn"),
+  bulkReviewBtn: document.getElementById("bulkReviewBtn"),
+  bulkClearBtn: document.getElementById("bulkClearBtn"),
+  bulkConfirmModal: document.getElementById("bulkConfirmModal"),
+  bulkConfirmSummary: document.getElementById("bulkConfirmSummary"),
+  bulkConfirmSubmit: document.getElementById("bulkConfirmSubmit"),
+  bulkConfirmCancel: document.getElementById("bulkConfirmCancel")
 };
 
 let selectedMonth = null;
@@ -252,6 +279,15 @@ function renderQuickAdd() {
     return;
   }
 
+  // Get prize counts for current month
+  const monthEvents = state.events.filter(e => e.month === month);
+  const prizeCounts = {};
+  for (const e of monthEvents) {
+    if (e.resultType === "prize" && e.prize?.id) {
+      prizeCounts[e.prize.id] = (prizeCounts[e.prize.id] || 0) + 1;
+    }
+  }
+
   if (system === "keys") {
     const color = getSelectedKeyColor();
     const prizes = cfg.keys?.[color] || [];
@@ -267,12 +303,14 @@ function renderQuickAdd() {
         label: p.name,
         badge: capitalize(color),
         badgeClass: "rare",
+        count: prizeCounts[p.id] || 0,
         onClick: () => addPrizeEvent({
           system: "keys",
           keyColor: color,
           prizeId: p.id,
           prizeName: p.name
-        })
+        }),
+        onSubtract: () => removePrizeEvent(p.id)
       }));
     }
   } else {
@@ -312,29 +350,50 @@ function renderQuickAdd() {
           label: p.name,
           badge: sec.title,
           badgeClass: sec.badgeClass,
+          count: prizeCounts[p.id] || 0,
           onClick: () => addPrizeEvent({
             system: "sits",
             sitsTier: sec.title.toLowerCase(), // common|rare|ultra
             prizeId: p.id,
             prizeName: fullPrizeName
-          })
+          }),
+          onSubtract: () => removePrizeEvent(p.id)
         }));
       }
     }
   }
 }
 
-function makePrizeButton({ label, badge, badgeClass, onClick }) {
+function makePrizeButton({ label, badge, badgeClass, onClick, count = 0, onSubtract }) {
   const btn = document.createElement("button");
   btn.className = "prize-btn";
   btn.type = "button";
   btn.innerHTML = `
     <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
-      <div style="font-weight:700;">${escapeHtml(label)}</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="prize-count${count > 0 ? ' has-count clickable' : ''}" title="${count > 0 ? 'Click to remove one' : ''}">${count}</span>
+        <span style="font-weight:700;">${escapeHtml(label)}</span>
+      </div>
       <span class="badge ${badgeClass}">${escapeHtml(badge)}</span>
     </div>
   `;
-  btn.addEventListener("click", onClick);
+
+  // Main button click adds
+  btn.addEventListener("click", (e) => {
+    // Don't trigger if clicking the count badge
+    if (e.target.classList.contains("prize-count")) return;
+    onClick();
+  });
+
+  // Count badge click subtracts
+  const countBadge = btn.querySelector(".prize-count");
+  if (countBadge && count > 0 && onSubtract) {
+    countBadge.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onSubtract();
+    });
+  }
+
   return btn;
 }
 
@@ -367,6 +426,24 @@ function addPrizeEvent({ system, keyColor = null, sitsTier = null, prizeId, priz
   state.selectedMonth = month;
   saveState(state);
 
+  renderAll();
+}
+
+function removePrizeEvent(prizeId) {
+  const state = ensureDefaultState();
+  const month = getSelectedMonth();
+
+  // Find the most recent event for this prize in the current month
+  const idx = state.events.findLastIndex(e =>
+    e.month === month &&
+    e.resultType === "prize" &&
+    e.prize?.id === prizeId
+  );
+
+  if (idx === -1) return;
+
+  state.events.splice(idx, 1);
+  saveState(state);
   renderAll();
 }
 
@@ -756,13 +833,16 @@ function renderAll() {
 
   const isAllMonths = selectedMonth === "all";
 
-  // Hide quick add and event log for "All Months" view
+  // Hide quick add, event log, and prize gallery for "All Months" view
   els.quickAddCard.style.display = isAllMonths ? "none" : "block";
   els.eventLogCard.style.display = isAllMonths ? "none" : "block";
+  els.availablePrizesCard.style.display = isAllMonths ? "none" : "block";
 
   if (!isAllMonths) {
+    updateBulkSessionUI();
     renderQuickAdd();
     renderEventsTable();
+    renderPrizeGallery();
   }
   renderSummary();
 }
@@ -806,6 +886,158 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+/* ---------- Prize Gallery ---------- */
+
+let selectedGallerySystem = "sits";
+
+function renderPrizeGallery() {
+  const month = getSelectedMonth();
+  const cfg = getMonthConfig(month);
+
+  els.prizeGallery.innerHTML = "";
+
+  if (!cfg) {
+    els.prizeGallery.innerHTML = `<div class="prize-gallery-empty">No prizes configured for ${escapeHtml(month)}.</div>`;
+    return;
+  }
+
+  if (selectedGallerySystem === "sits") {
+    renderSitsPrizeGallery(cfg);
+  } else {
+    renderKeysPrizeGallery(cfg);
+  }
+}
+
+function renderSitsPrizeGallery(cfg) {
+  if (!cfg.sits) {
+    els.prizeGallery.innerHTML = `<div class="prize-gallery-empty">No SITS prizes configured.</div>`;
+    return;
+  }
+
+  const month = getSelectedMonth();
+  // Convert "December 2025" to "December-2025" for filename
+  const monthFileName = month.replace(" ", "-");
+  const imgPath = `./images/prizes/${monthFileName}-SITS.png`;
+
+  els.prizeGallery.innerHTML = `
+    <div class="prize-gallery-official">
+      <img src="${imgPath}" alt="${escapeHtml(month)} SITS Prizes" onerror="this.parentElement.innerHTML='<div class=\\'prize-gallery-empty\\'>No official image available for ${escapeHtml(month)}.</div>'" />
+    </div>
+  `;
+
+  /* --- INDIVIDUAL PRIZE IMAGES (commented out for future use) ---
+  const theme = cfg.sits.theme || "";
+  const tiers = [
+    { name: "Ultra", items: cfg.sits.ultra || [], badgeClass: "ultra" },
+    { name: "Rare", items: cfg.sits.rare || [], badgeClass: "rare" },
+    { name: "Common", items: cfg.sits.common || [], badgeClass: "ok" }
+  ];
+
+  let hasAny = false;
+
+  for (const tier of tiers) {
+    for (const prize of tier.items) {
+      hasAny = true;
+      const item = document.createElement("div");
+      item.className = "prize-gallery-item";
+
+      const imgPath = `./images/prizes/${prize.id}.png`;
+      const fullName = theme ? `${theme} ${prize.name}` : prize.name;
+
+      item.innerHTML = `
+        <img src="${imgPath}" alt="${escapeHtml(fullName)}" onerror="this.outerHTML='<div class=\\'no-image\\'>No image</div>'" />
+        <div class="prize-label">${escapeHtml(prize.name)}</div>
+        <span class="badge ${tier.badgeClass} prize-tier">${tier.name}</span>
+      `;
+      els.prizeGallery.appendChild(item);
+    }
+  }
+
+  if (!hasAny) {
+    els.prizeGallery.innerHTML = `<div class="prize-gallery-empty">No SITS prizes configured.</div>`;
+  }
+  --- END INDIVIDUAL PRIZE IMAGES --- */
+}
+
+function renderKeysPrizeGallery(cfg) {
+  if (!cfg.keys) {
+    els.prizeGallery.innerHTML = `<div class="prize-gallery-empty">No chest prizes configured.</div>`;
+    return;
+  }
+
+  const month = getSelectedMonth();
+  // Convert "December 2025" to "December-2025" for filename
+  const monthFileName = month.replace(" ", "-");
+  const imgPath = `./images/prizes/${monthFileName}-Chests.png`;
+
+  els.prizeGallery.innerHTML = `
+    <div class="prize-gallery-official">
+      <img src="${imgPath}" alt="${escapeHtml(month)} Chest Prizes" onerror="this.parentElement.innerHTML='<div class=\\'prize-gallery-empty\\'>No official image available for ${escapeHtml(month)}.</div>'" />
+    </div>
+  `;
+
+  /* --- INDIVIDUAL PRIZE IMAGES (commented out for future use) ---
+  const colors = [
+    { name: "Gold", key: "gold", badgeClass: "ultra" },
+    { name: "Silver", key: "silver", badgeClass: "rare" },
+    { name: "Bronze", key: "bronze", badgeClass: "ok" }
+  ];
+
+  let hasAny = false;
+
+  for (const color of colors) {
+    const prizes = cfg.keys[color.key] || [];
+    for (const prize of prizes) {
+      hasAny = true;
+      const item = document.createElement("div");
+      item.className = "prize-gallery-item";
+
+      const imgPath = `./images/prizes/${prize.id}.png`;
+
+      item.innerHTML = `
+        <img src="${imgPath}" alt="${escapeHtml(prize.name)}" onerror="this.outerHTML='<div class=\\'no-image\\'>No image</div>'" />
+        <div class="prize-label">${escapeHtml(prize.name)}</div>
+        <span class="badge ${color.badgeClass} prize-tier">${color.name}</span>
+      `;
+      els.prizeGallery.appendChild(item);
+    }
+  }
+
+  if (!hasAny) {
+    els.prizeGallery.innerHTML = `<div class="prize-gallery-empty">No chest prizes configured.</div>`;
+  }
+  --- END INDIVIDUAL PRIZE IMAGES --- */
+}
+
+function setGallerySystem(system) {
+  selectedGallerySystem = system;
+
+  // Update toggle buttons
+  document.querySelectorAll(".gallery-toggle-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.system === system);
+  });
+
+  renderPrizeGallery();
+}
+
+const GALLERY_COLLAPSED_KEY = "myvmk_gallery_collapsed";
+
+function isGalleryCollapsed() {
+  return localStorage.getItem(GALLERY_COLLAPSED_KEY) === "true";
+}
+
+function toggleGalleryCollapse() {
+  const card = els.availablePrizesCard;
+  const isCollapsed = card.classList.toggle("collapsed");
+  localStorage.setItem(GALLERY_COLLAPSED_KEY, isCollapsed);
+}
+
+function initGalleryCollapse() {
+  if (isGalleryCollapsed()) {
+    els.availablePrizesCard.classList.add("collapsed");
+  }
+}
+
 /* ---------- theme toggle ---------- */
 
 const THEME_KEY = "myvmk_theme";
@@ -832,6 +1064,420 @@ function toggleTheme() {
   setTheme(current === "dark" ? "light" : "dark");
 }
 
+/* ---------- Bulk Session Mode ---------- */
+
+// Bulk session state structure:
+// {
+//   enabled: boolean,
+//   batchTotal: number | null,
+//   prizes: { [prizeId]: { name, tier, qty } },
+//   credits: { [amount]: qty }
+// }
+
+function loadBulkSession() {
+  try {
+    const raw = localStorage.getItem(BULK_SESSION_KEY);
+    if (!raw) return getDefaultBulkSession();
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return getDefaultBulkSession();
+    return parsed;
+  } catch {
+    return getDefaultBulkSession();
+  }
+}
+
+function getDefaultBulkSession() {
+  return {
+    enabled: false,
+    batchTotal: null,
+    prizes: {},
+    credits: {}
+  };
+}
+
+function saveBulkSession(session) {
+  localStorage.setItem(BULK_SESSION_KEY, JSON.stringify(session));
+}
+
+function isBulkSessionEnabled() {
+  const session = loadBulkSession();
+  return session.enabled;
+}
+
+function toggleBulkSessionMode() {
+  const session = loadBulkSession();
+  session.enabled = !session.enabled;
+  saveBulkSession(session);
+  updateBulkSessionUI();
+}
+
+function updateBulkSessionUI() {
+  const session = loadBulkSession();
+  const enabled = session.enabled;
+  const system = getSelectedSystem();
+
+  // Only show bulk session toggle for SITS
+  const isSits = system === "sits";
+  els.bulkSessionToggle.closest(".bulk-session-toggle-row").style.display = isSits ? "flex" : "none";
+
+  // If not SITS, force normal UI
+  if (!isSits) {
+    els.bulkSessionUI.style.display = "none";
+    els.normalQuickAddUI.style.display = "block";
+    return;
+  }
+
+  els.bulkSessionToggle.checked = enabled;
+  els.bulkSessionUI.style.display = enabled ? "block" : "none";
+  els.normalQuickAddUI.style.display = enabled ? "none" : "block";
+
+  if (enabled) {
+    // Restore batch total from session
+    if (session.batchTotal) {
+      els.bulkBatchTotal.value = session.batchTotal;
+    }
+    renderBulkPrizeList();
+    updateBulkStats();
+  }
+}
+
+function renderBulkPrizeList() {
+  const month = getSelectedMonth();
+  const cfg = getMonthConfig(month);
+  const session = loadBulkSession();
+
+  els.bulkPrizeList.innerHTML = "";
+  els.bulkCreditsGrid.innerHTML = "";
+
+  if (!cfg || !cfg.sits) {
+    els.bulkPrizeList.innerHTML = `<div class="subtle">No SITS prizes configured for ${escapeHtml(month)}.</div>`;
+    els.bulkCreditsSection.style.display = "none";
+    return;
+  }
+
+  const theme = cfg.sits.theme || "";
+  const tiers = [
+    { name: "common", label: "Common", items: cfg.sits.common || [] },
+    { name: "rare", label: "Rare", items: cfg.sits.rare || [] },
+    { name: "ultra", label: "Ultra", items: cfg.sits.ultra || [] }
+  ];
+
+  // Show theme header if configured
+  if (theme) {
+    const themeHeader = document.createElement("div");
+    themeHeader.className = "sits-theme-header";
+    themeHeader.style.gridColumn = "1 / -1";
+    themeHeader.textContent = theme;
+    els.bulkPrizeList.appendChild(themeHeader);
+  }
+
+  for (const tier of tiers) {
+    for (const prize of tier.items) {
+      const fullName = theme ? `${theme} ${prize.name}` : prize.name;
+      const currentQty = session.prizes[prize.id]?.qty || 0;
+
+      const item = document.createElement("div");
+      item.className = "bulk-prize-item";
+      item.innerHTML = `
+        <span class="badge ${tier.name === 'common' ? 'ok' : tier.name === 'rare' ? 'rare' : 'ultra'}">${tier.label}</span>
+        <span class="prize-name">${escapeHtml(prize.name)}</span>
+        <input type="number" class="prize-qty-input" min="0" value="${currentQty}"
+               data-prize-id="${escapeHtml(prize.id)}"
+               data-prize-name="${escapeHtml(fullName)}"
+               data-tier="${tier.name}" />
+      `;
+      els.bulkPrizeList.appendChild(item);
+    }
+  }
+
+  // Bind prize quantity inputs
+  els.bulkPrizeList.querySelectorAll(".prize-qty-input").forEach(input => {
+    input.addEventListener("input", () => {
+      const prizeId = input.dataset.prizeId;
+      const prizeName = input.dataset.prizeName;
+      const tier = input.dataset.tier;
+      const qty = parseInt(input.value, 10) || 0;
+
+      const session = loadBulkSession();
+      if (qty > 0) {
+        session.prizes[prizeId] = { name: prizeName, tier, qty };
+      } else {
+        delete session.prizes[prizeId];
+      }
+      saveBulkSession(session);
+      updateBulkStats();
+    });
+  });
+
+  // Credits section
+  const creditsEnabled = cfg.sits.creditsEnabled ?? true;
+  els.bulkCreditsSection.style.display = creditsEnabled ? "block" : "none";
+
+  if (creditsEnabled) {
+    const creditAmounts = [250, 300, 500, 750];
+    for (const amount of creditAmounts) {
+      const currentQty = session.credits[amount] || 0;
+
+      const item = document.createElement("div");
+      item.className = "bulk-credit-item";
+      item.innerHTML = `
+        <span class="credit-label">${amount} credits</span>
+        <input type="number" class="credit-qty-input" min="0" value="${currentQty}" data-amount="${amount}" />
+      `;
+      els.bulkCreditsGrid.appendChild(item);
+    }
+
+    // Bind credit quantity inputs
+    els.bulkCreditsGrid.querySelectorAll(".credit-qty-input").forEach(input => {
+      input.addEventListener("input", () => {
+        const amount = input.dataset.amount;
+        const qty = parseInt(input.value, 10) || 0;
+
+        const session = loadBulkSession();
+        if (qty > 0) {
+          session.credits[amount] = qty;
+        } else {
+          delete session.credits[amount];
+        }
+        saveBulkSession(session);
+        updateBulkStats();
+      });
+    });
+  }
+}
+
+function updateBulkStats() {
+  const session = loadBulkSession();
+  const batchTotal = parseInt(els.bulkBatchTotal.value, 10) || 0;
+
+  // Save batch total to session
+  session.batchTotal = batchTotal || null;
+  saveBulkSession(session);
+
+  // Calculate total wins
+  let totalWins = 0;
+
+  // Count prize wins
+  for (const prizeId in session.prizes) {
+    totalWins += session.prizes[prizeId].qty || 0;
+  }
+
+  // Count credit wins
+  for (const amount in session.credits) {
+    totalWins += session.credits[amount] || 0;
+  }
+
+  // Calculate inferred ash
+  let inferredAsh = batchTotal > 0 ? Math.max(0, batchTotal - totalWins) : 0;
+  const winsExceedTotal = batchTotal > 0 && totalWins > batchTotal;
+
+  els.bulkWinsLogged.textContent = totalWins;
+  els.bulkInferredAsh.textContent = inferredAsh;
+  els.bulkWarning.style.display = winsExceedTotal ? "block" : "none";
+}
+
+function addBulkCustomCredits() {
+  const amount = parseInt(els.bulkCreditsCustomAmount.value, 10);
+  const qty = parseInt(els.bulkCreditsCustomQty.value, 10) || 1;
+
+  if (!amount || amount <= 0) {
+    alert("Enter a valid credits amount.");
+    return;
+  }
+
+  const session = loadBulkSession();
+  session.credits[amount] = (session.credits[amount] || 0) + qty;
+  saveBulkSession(session);
+
+  // Clear inputs
+  els.bulkCreditsCustomAmount.value = "";
+  els.bulkCreditsCustomQty.value = "1";
+
+  // Re-render to show in the grid if it's a standard amount, or just update stats
+  renderBulkPrizeList();
+  updateBulkStats();
+}
+
+function clearBulkSession() {
+  if (!confirm("Clear all wins logged in this batch session?")) return;
+
+  const session = loadBulkSession();
+  session.prizes = {};
+  session.credits = {};
+  session.batchTotal = null;
+  saveBulkSession(session);
+
+  els.bulkBatchTotal.value = "";
+  renderBulkPrizeList();
+  updateBulkStats();
+}
+
+function showBulkReviewModal() {
+  const session = loadBulkSession();
+  const batchTotal = parseInt(els.bulkBatchTotal.value, 10) || 0;
+
+  // Calculate totals
+  let totalPrizes = 0;
+  let totalCredits = 0;
+  let totalCreditsAmount = 0;
+
+  for (const prizeId in session.prizes) {
+    totalPrizes += session.prizes[prizeId].qty || 0;
+  }
+
+  for (const amount in session.credits) {
+    const qty = session.credits[amount] || 0;
+    totalCredits += qty;
+    totalCreditsAmount += parseInt(amount, 10) * qty;
+  }
+
+  const totalWins = totalPrizes + totalCredits;
+  const inferredAsh = batchTotal > 0 ? Math.max(0, batchTotal - totalWins) : 0;
+  const winsExceedTotal = batchTotal > 0 && totalWins > batchTotal;
+
+  // Build summary HTML
+  let html = `
+    <div class="confirm-row">
+      <span class="confirm-label">Batch Total</span>
+      <span class="confirm-value">${batchTotal || "Not set"}</span>
+    </div>
+    <div class="confirm-row">
+      <span class="confirm-label">Total Wins</span>
+      <span class="confirm-value">${totalWins}</span>
+    </div>
+    <div class="confirm-row">
+      <span class="confirm-label">Inferred Ash</span>
+      <span class="confirm-value">${inferredAsh}${winsExceedTotal ? " (wins exceed total!)" : ""}</span>
+    </div>
+  `;
+
+  // Prize breakdown
+  if (totalPrizes > 0) {
+    html += `<div class="confirm-section"><div class="confirm-section-title">Prizes (${totalPrizes})</div>`;
+    for (const prizeId in session.prizes) {
+      const prize = session.prizes[prizeId];
+      html += `<div class="confirm-item"><span>${escapeHtml(prize.name)}</span><span>${prize.qty}x</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Credits breakdown
+  if (totalCredits > 0) {
+    html += `<div class="confirm-section"><div class="confirm-section-title">Credits (${totalCredits} wins = ${totalCreditsAmount.toLocaleString()} total)</div>`;
+    for (const amount in session.credits) {
+      const qty = session.credits[amount];
+      html += `<div class="confirm-item"><span>${amount} credits</span><span>${qty}x</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Ash
+  if (inferredAsh > 0) {
+    html += `<div class="confirm-section"><div class="confirm-section-title">Ash</div>`;
+    html += `<div class="confirm-item"><span>Auto-calculated ash</span><span>${inferredAsh}x</span></div>`;
+    html += `</div>`;
+  }
+
+  els.bulkConfirmSummary.innerHTML = html;
+  els.bulkConfirmModal.style.display = "flex";
+}
+
+function hideBulkConfirmModal() {
+  els.bulkConfirmModal.style.display = "none";
+}
+
+function submitBulkSession() {
+  const state = ensureDefaultState();
+  const session = loadBulkSession();
+  const date = getSelectedDate();
+  const month = getSelectedMonth();
+  const batchTotal = parseInt(els.bulkBatchTotal.value, 10) || 0;
+
+  // Calculate totals for ash
+  let totalWins = 0;
+  for (const prizeId in session.prizes) {
+    totalWins += session.prizes[prizeId].qty || 0;
+  }
+  for (const amount in session.credits) {
+    totalWins += session.credits[amount] || 0;
+  }
+
+  const inferredAsh = batchTotal > 0 ? Math.max(0, batchTotal - totalWins) : 0;
+
+  // Add prize events
+  for (const prizeId in session.prizes) {
+    const prize = session.prizes[prizeId];
+    for (let i = 0; i < prize.qty; i++) {
+      state.events.push({
+        id: cryptoId(),
+        createdAt: new Date().toISOString(),
+        date,
+        month,
+        system: "sits",
+        keyColor: null,
+        sitsTier: prize.tier,
+        resultType: "prize",
+        prize: { id: prizeId, name: prize.name },
+        creditsAmount: null
+      });
+    }
+  }
+
+  // Add credit events
+  for (const amount in session.credits) {
+    const qty = session.credits[amount];
+    for (let i = 0; i < qty; i++) {
+      state.events.push({
+        id: cryptoId(),
+        createdAt: new Date().toISOString(),
+        date,
+        month,
+        system: "sits",
+        keyColor: null,
+        sitsTier: null,
+        resultType: "credits",
+        prize: null,
+        creditsAmount: parseInt(amount, 10)
+      });
+    }
+  }
+
+  // Add ash events
+  for (let i = 0; i < inferredAsh; i++) {
+    state.events.push({
+      id: cryptoId(),
+      createdAt: new Date().toISOString(),
+      date,
+      month,
+      system: "sits",
+      keyColor: null,
+      sitsTier: null,
+      resultType: "ash",
+      prize: null,
+      creditsAmount: null
+    });
+  }
+
+  state.selectedMonth = month;
+  saveState(state);
+
+  // Clear bulk session (but keep enabled)
+  const newSession = loadBulkSession();
+  newSession.prizes = {};
+  newSession.credits = {};
+  newSession.batchTotal = null;
+  saveBulkSession(newSession);
+
+  // Hide modal and refresh
+  hideBulkConfirmModal();
+  els.bulkBatchTotal.value = "";
+  renderBulkPrizeList();
+  updateBulkStats();
+  renderAll();
+
+  alert(`Batch submitted: ${Object.keys(session.prizes).length > 0 ? Object.values(session.prizes).reduce((s, p) => s + p.qty, 0) + " prizes, " : ""}${Object.keys(session.credits).length > 0 ? Object.values(session.credits).reduce((s, q) => s + q, 0) + " credit wins, " : ""}${inferredAsh} ash added.`);
+}
+
 /* ---------- init ---------- */
 
 (function init() {
@@ -848,6 +1494,7 @@ function toggleTheme() {
   buildMonthTabs(state);
 
   els.systemSelect.addEventListener("change", () => {
+    updateBulkSessionUI();
     renderQuickAdd();
     renderSummary();
   });
@@ -900,6 +1547,30 @@ function toggleTheme() {
 
   els.resetBtn.addEventListener("click", resetAll);
   els.deleteMonthBtn.addEventListener("click", deleteSelectedMonth);
+
+  // Bulk Session Mode event listeners
+  els.bulkSessionToggle.addEventListener("change", toggleBulkSessionMode);
+  els.bulkBatchTotal.addEventListener("input", updateBulkStats);
+  els.bulkCreditsCustomBtn.addEventListener("click", addBulkCustomCredits);
+  els.bulkReviewBtn.addEventListener("click", showBulkReviewModal);
+  els.bulkClearBtn.addEventListener("click", clearBulkSession);
+  els.bulkConfirmSubmit.addEventListener("click", submitBulkSession);
+  els.bulkConfirmCancel.addEventListener("click", hideBulkConfirmModal);
+
+  // Initialize bulk session UI state
+  updateBulkSessionUI();
+
+  // Prize gallery toggle buttons
+  document.querySelectorAll(".gallery-toggle-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Don't trigger collapse when clicking toggle
+      setGallerySystem(btn.dataset.system);
+    });
+  });
+
+  // Prize gallery collapse
+  els.prizeGalleryHeader.addEventListener("click", toggleGalleryCollapse);
+  initGalleryCollapse();
 
   renderAll();
 })();

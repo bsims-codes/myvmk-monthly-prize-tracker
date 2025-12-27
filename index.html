@@ -53,6 +53,69 @@
       <h2>Quick Add</h2>
       <p class="subtle" id="quickAddHint"></p>
 
+      <!-- Bulk Session Mode Toggle -->
+      <div id="bulkSessionToggleRow" class="bulk-session-toggle-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="bulkSessionToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Bulk Session Mode</span>
+        <span class="subtle small">(Log only wins, auto-calculate Ash)</span>
+      </div>
+
+      <!-- Bulk Session UI (hidden by default) -->
+      <div id="bulkSessionUI" class="bulk-session-ui" style="display: none;">
+        <div class="bulk-session-header">
+          <div class="field">
+            <label for="bulkBatchTotal">Batch Total (opens)</label>
+            <input id="bulkBatchTotal" type="number" min="1" placeholder="e.g., 50" />
+          </div>
+          <div class="bulk-session-stats">
+            <div class="bulk-stat">
+              <span class="bulk-stat-label">Wins Logged</span>
+              <span class="bulk-stat-value" id="bulkWinsLogged">0</span>
+            </div>
+            <div class="bulk-stat">
+              <span class="bulk-stat-label">Inferred Ash</span>
+              <span class="bulk-stat-value" id="bulkInferredAsh">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="bulkWarning" class="bulk-warning" style="display: none;">
+          Wins exceed batch total! Ash will be set to 0.
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="bulkPrizeList" class="bulk-prize-list"></div>
+
+        <div id="bulkCreditsSection" class="bulk-credits-section">
+          <label class="field-label">Credits Wins</label>
+          <div class="bulk-credits-grid" id="bulkCreditsGrid"></div>
+          <div class="bulk-credits-custom">
+            <div class="field">
+              <label for="bulkCreditsCustomAmount">Custom Amount</label>
+              <input id="bulkCreditsCustomAmount" type="number" min="0" placeholder="e.g., 1000" />
+            </div>
+            <div class="field">
+              <label for="bulkCreditsCustomQty">Qty</label>
+              <input id="bulkCreditsCustomQty" type="number" min="1" value="1" style="width: 60px;" />
+            </div>
+            <button id="bulkCreditsCustomBtn" class="btn btn-secondary">Add</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="bulk-session-actions">
+          <button id="bulkReviewBtn" class="btn">Review & Submit Batch</button>
+          <button id="bulkClearBtn" class="btn btn-secondary">Clear Session</button>
+        </div>
+      </div>
+
+      <!-- Normal Quick Add UI -->
+      <div id="normalQuickAddUI">
       <div id="keyColorRow" style="margin-bottom: 14px;">
         <label class="field-label">Key Color</label>
         <div class="key-color-buttons">
@@ -100,8 +163,9 @@
       </div>
 
       <div class="small subtle">
-        Tip: Your history is stored, and monthly prize updates won’t overwrite your past months.
+        Tip: Your history is stored, and monthly prize updates won't overwrite your past months.
       </div>
+      </div><!-- /normalQuickAddUI -->
     </section>
 
     <section class="card">
@@ -112,6 +176,22 @@
     <section class="card">
       <h2>SITS Summary</h2>
       <div id="summarySits" class="summary"></div>
+    </section>
+
+    <section class="card span-2 collapsible" id="availablePrizesCard">
+      <div class="collapsible-header" id="prizeGalleryHeader">
+        <div class="collapsible-title">
+          <span class="collapse-icon">▼</span>
+          <h2>Available Prizes</h2>
+        </div>
+        <div class="prize-gallery-toggle">
+          <button type="button" class="gallery-toggle-btn active" data-system="sits">SITS</button>
+          <button type="button" class="gallery-toggle-btn" data-system="keys">Chests</button>
+        </div>
+      </div>
+      <div class="collapsible-content" id="prizeGalleryContent">
+        <div id="prizeGallery" class="prize-gallery"></div>
+      </div>
     </section>
 
     <section class="card span-2" id="eventLogCard">
@@ -154,6 +234,18 @@
       No accounts. No storage. Export your data to avoid losing it.
     </div>
   </footer>
+
+  <!-- Bulk Session Confirmation Modal -->
+  <div id="bulkConfirmModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Review Batch Session</h3>
+      <div id="bulkConfirmSummary" class="bulk-confirm-summary"></div>
+      <div class="modal-actions">
+        <button id="bulkConfirmSubmit" class="btn">Confirm & Add to Stats</button>
+        <button id="bulkConfirmCancel" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script src="./prizeConfig.js"></script>
   <script src="./app.js"></script>
