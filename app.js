@@ -137,11 +137,13 @@ function getSelectedDate() {
 }
 
 function getSelectedQuantity() {
+  if (!els.customQty) return 1;
   const val = parseInt(els.customQty.value, 10);
   return (Number.isFinite(val) && val >= 1) ? Math.min(val, 100) : 1;
 }
 
 function updateQuantityHint() {
+  if (!els.quantityHint) return;
   const qty = getSelectedQuantity();
   if (qty === 1) {
     els.quantityHint.textContent = "Clicking a prize button will add 1 entry.";
@@ -870,11 +872,13 @@ function toggleTheme() {
   });
 
   // Custom quantity input
-  els.customQty.addEventListener("input", () => {
-    // Deselect quick buttons when user types custom value
-    document.querySelectorAll(".qty-quick-btn").forEach(b => b.classList.remove("active"));
-    updateQuantityHint();
-  });
+  if (els.customQty) {
+    els.customQty.addEventListener("input", () => {
+      // Deselect quick buttons when user types custom value
+      document.querySelectorAll(".qty-quick-btn").forEach(b => b.classList.remove("active"));
+      updateQuantityHint();
+    });
+  }
 
   els.addCreditsBtn.addEventListener("click", addCreditsEvent);
   els.addAshBtn.addEventListener("click", addAshEvent);
