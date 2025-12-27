@@ -109,6 +109,51 @@ h2{ margin:0 0 12px 0; font-size: 18px; }
   background: rgba(74,124,255,.15);
 }
 
+/* ---------- System Toggle (Chests/SITS) ---------- */
+
+.system-toggle-bar{
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.system-toggle{
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.system-toggle-btn{
+  cursor: pointer;
+  padding: 12px 32px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.system-toggle-btn:hover{
+  color: var(--text);
+  background: rgba(255,255,255,.05);
+}
+
+.system-toggle-btn.active{
+  background: rgba(122,162,255,.2);
+  border-color: rgba(122,162,255,.5);
+  color: var(--text);
+}
+
+[data-theme="light"] .system-toggle-btn.active{
+  background: rgba(74,124,255,.15);
+  border-color: rgba(74,124,255,.4);
+}
+
 .bar{
   margin-top: 14px;
   display:grid;

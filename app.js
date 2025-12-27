@@ -10,9 +10,8 @@ const BULK_SESSION_KEY = "myvmk_bulk_session_v1";
 
 const els = {
   monthTabs: document.getElementById("monthTabs"),
-  systemSelect: document.getElementById("systemSelect"),
+  systemToggle: document.getElementById("systemToggle"),
   keyColorRow: document.getElementById("keyColorRow"),
-  dateInput: document.getElementById("dateInput"),
 
   quickButtons: document.getElementById("quickButtons"),
   quickAddHint: document.getElementById("quickAddHint"),
@@ -151,7 +150,8 @@ function getSelectedMonth() {
 }
 
 function getSelectedSystem() {
-  return els.systemSelect.value; // keys | sits
+  const activeBtn = document.querySelector(".system-toggle-btn.active");
+  return activeBtn ? activeBtn.dataset.system : "keys";
 }
 
 function getSelectedKeyColor() {
@@ -160,7 +160,7 @@ function getSelectedKeyColor() {
 }
 
 function getSelectedDate() {
-  return els.dateInput.value || todayISO();
+  return todayISO();
 }
 
 function getSelectedQuantity() {
@@ -1487,16 +1487,18 @@ function submitBulkSession() {
   setTheme(getStoredTheme());
   els.themeToggle.addEventListener("click", toggleTheme);
 
-  // Defaults
-  els.dateInput.value = todayISO();
-
   // Populate month tabs from config + history
   buildMonthTabs(state);
 
-  els.systemSelect.addEventListener("change", () => {
-    updateBulkSessionUI();
-    renderQuickAdd();
-    renderSummary();
+  // System toggle (Chests/SITS) button selection
+  document.querySelectorAll(".system-toggle-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".system-toggle-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateBulkSessionUI();
+      renderQuickAdd();
+      renderSummary();
+    });
   });
 
   // Key color button selection

@@ -12,7 +12,7 @@
       <div>
         <h1>MyVMK Monthly Prize Tracker</h1>
         <p class="subtle">
-          Local tracker for monthly Keys + SITS. All data is stored in your browser - if you clear your browser data, you will lose your data.
+          A simple way for you to track your monthly Chests and SITS pulls in MyVMK! All data is stored locally in your browser - if you clear your browser data, you will lose your stats. Make sure to use the export button to download a file you can import later.
         </p>
       </div>
 
@@ -32,18 +32,10 @@
 
     <div class="month-tabs" id="monthTabs"></div>
 
-    <div class="bar bar-2col">
-      <div class="field">
-        <label for="systemSelect">Chests/SITS</label>
-        <select id="systemSelect">
-          <option value="keys">Chest Keys</option>
-          <option value="sits">SITS</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="dateInput">Date</label>
-        <input id="dateInput" type="date" />
+    <div class="system-toggle-bar">
+      <div class="system-toggle" id="systemToggle">
+        <button type="button" class="system-toggle-btn active" data-system="keys">Chest Keys</button>
+        <button type="button" class="system-toggle-btn" data-system="sits">SITS</button>
       </div>
     </div>
   </header>
