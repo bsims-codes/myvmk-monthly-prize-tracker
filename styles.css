@@ -775,11 +775,73 @@ select:focus, input:focus{
   font-size: 13px;
 }
 
+.qty-stepper{
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.qty-arrow{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.qty-arrow:hover{
+  background: rgba(122,162,255,.2);
+}
+
+.qty-arrow:active{
+  background: rgba(122,162,255,.35);
+}
+
+.qty-down{
+  border-right: 1px solid var(--border);
+}
+
+.qty-up{
+  border-left: 1px solid var(--border);
+}
+
 .bulk-prize-item .prize-qty-input{
-  width: 60px;
+  width: 42px;
   text-align: center;
-  padding: 6px 8px;
+  padding: 6px 4px;
   font-size: 14px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.bulk-prize-item .prize-qty-input:focus{
+  outline: none;
+  border: none;
+}
+
+/* Hide native number input spinners in qty-stepper */
+.qty-stepper input[type="number"]::-webkit-outer-spin-button,
+.qty-stepper input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-stepper input[type="number"]{
+  -moz-appearance: textfield;
 }
 
 .bulk-credits-section{
@@ -810,10 +872,18 @@ select:focus, input:focus{
 }
 
 .bulk-credit-item .credit-qty-input{
-  width: 50px;
+  width: 42px;
   text-align: center;
-  padding: 6px 8px;
+  padding: 6px 4px;
   font-size: 14px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.bulk-credit-item .credit-qty-input:focus{
+  outline: none;
+  border: none;
 }
 
 .bulk-credits-custom{

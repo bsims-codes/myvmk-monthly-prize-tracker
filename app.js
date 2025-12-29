@@ -1181,10 +1181,14 @@ function renderBulkPrizeList() {
       item.innerHTML = `
         <span class="badge ${tier.name === 'common' ? 'ok' : tier.name === 'rare' ? 'rare' : 'ultra'}">${tier.label}</span>
         <span class="prize-name">${escapeHtml(prize.name)}</span>
-        <input type="number" class="prize-qty-input" min="0" value="${currentQty}"
-               data-prize-id="${escapeHtml(prize.id)}"
-               data-prize-name="${escapeHtml(fullName)}"
-               data-tier="${tier.name}" />
+        <div class="qty-stepper">
+          <button type="button" class="qty-arrow qty-down" data-prize-id="${escapeHtml(prize.id)}" aria-label="Decrease">−</button>
+          <input type="number" class="prize-qty-input" min="0" value="${currentQty}"
+                 data-prize-id="${escapeHtml(prize.id)}"
+                 data-prize-name="${escapeHtml(fullName)}"
+                 data-tier="${tier.name}" />
+          <button type="button" class="qty-arrow qty-up" data-prize-id="${escapeHtml(prize.id)}" aria-label="Increase">+</button>
+        </div>
       `;
       els.bulkPrizeList.appendChild(item);
     }
@@ -1209,6 +1213,24 @@ function renderBulkPrizeList() {
     });
   });
 
+  // Bind arrow buttons for prize quantities
+  els.bulkPrizeList.querySelectorAll(".qty-arrow").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const prizeId = btn.dataset.prizeId;
+      const input = els.bulkPrizeList.querySelector(`.prize-qty-input[data-prize-id="${prizeId}"]`);
+      if (!input) return;
+
+      let currentVal = parseInt(input.value, 10) || 0;
+      if (btn.classList.contains("qty-up")) {
+        currentVal++;
+      } else if (btn.classList.contains("qty-down") && currentVal > 0) {
+        currentVal--;
+      }
+      input.value = currentVal;
+      input.dispatchEvent(new Event("input"));
+    });
+  });
+
   // Credits section
   const creditsEnabled = cfg.sits.creditsEnabled ?? true;
   els.bulkCreditsSection.style.display = creditsEnabled ? "block" : "none";
@@ -1222,7 +1244,11 @@ function renderBulkPrizeList() {
       item.className = "bulk-credit-item";
       item.innerHTML = `
         <span class="credit-label">${amount} credits</span>
-        <input type="number" class="credit-qty-input" min="0" value="${currentQty}" data-amount="${amount}" />
+        <div class="qty-stepper">
+          <button type="button" class="qty-arrow qty-down" data-amount="${amount}" aria-label="Decrease">−</button>
+          <input type="number" class="credit-qty-input" min="0" value="${currentQty}" data-amount="${amount}" />
+          <button type="button" class="qty-arrow qty-up" data-amount="${amount}" aria-label="Increase">+</button>
+        </div>
       `;
       els.bulkCreditsGrid.appendChild(item);
     }
@@ -1241,6 +1267,24 @@ function renderBulkPrizeList() {
         }
         saveBulkSession(session);
         updateBulkStats();
+      });
+    });
+
+    // Bind arrow buttons for credit quantities
+    els.bulkCreditsGrid.querySelectorAll(".qty-arrow").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const amount = btn.dataset.amount;
+        const input = els.bulkCreditsGrid.querySelector(`.credit-qty-input[data-amount="${amount}"]`);
+        if (!input) return;
+
+        let currentVal = parseInt(input.value, 10) || 0;
+        if (btn.classList.contains("qty-up")) {
+          currentVal++;
+        } else if (btn.classList.contains("qty-down") && currentVal > 0) {
+          currentVal--;
+        }
+        input.value = currentVal;
+        input.dispatchEvent(new Event("input"));
       });
     });
   }
