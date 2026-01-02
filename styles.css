@@ -421,7 +421,64 @@ select:focus, input:focus{
   text-align: center;
 }
 
-.ash-row{ margin-top: 10px; }
+.ash-row{
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ash-count-indicator{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.ash-count-value{
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 24px;
+  text-align: center;
+}
+
+.ash-count-label{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.credits-header-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.credits-total-indicator{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(122,162,255,.1);
+  border: 1px solid rgba(122,162,255,.3);
+  border-radius: 10px;
+}
+
+.credits-total-value{
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.credits-total-label{
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .note-row{ margin-top: 12px; }
 
 .summary{
@@ -709,6 +766,29 @@ select:focus, input:focus{
 
 .bulk-session-header .field{
   flex: 0 0 180px;
+}
+
+.bulk-input-field{
+  flex: 0 0 auto !important;
+}
+
+.bulk-stepper{
+  width: 140px;
+}
+
+.bulk-stepper input{
+  width: 60px;
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 14px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.bulk-stepper input:focus{
+  outline: none;
+  border: none;
 }
 
 .bulk-session-stats{

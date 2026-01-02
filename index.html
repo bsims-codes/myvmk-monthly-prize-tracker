@@ -58,11 +58,27 @@
       <!-- Bulk Session UI (hidden by default) -->
       <div id="bulkSessionUI" class="bulk-session-ui" style="display: none;">
         <div class="bulk-session-header">
-          <div class="field">
+          <div class="field bulk-input-field">
+            <label for="bulkTotalKeys">Total Keys (optional)</label>
+            <div class="qty-stepper bulk-stepper">
+              <button type="button" class="qty-arrow qty-down" id="totalKeysDown" aria-label="Decrease">−</button>
+              <input id="bulkTotalKeys" type="number" min="0" placeholder="e.g., 200" />
+              <button type="button" class="qty-arrow qty-up" id="totalKeysUp" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="field bulk-input-field">
             <label for="bulkBatchTotal">Batch Total (opens)</label>
-            <input id="bulkBatchTotal" type="number" min="1" placeholder="e.g., 50" />
+            <div class="qty-stepper bulk-stepper">
+              <button type="button" class="qty-arrow qty-down" id="batchTotalDown" aria-label="Decrease">−</button>
+              <input id="bulkBatchTotal" type="number" min="1" placeholder="e.g., 50" />
+              <button type="button" class="qty-arrow qty-up" id="batchTotalUp" aria-label="Increase">+</button>
+            </div>
           </div>
           <div class="bulk-session-stats">
+            <div class="bulk-stat" id="remainingKeysStat" style="display: none;">
+              <span class="bulk-stat-label">Remaining Keys</span>
+              <span class="bulk-stat-value" id="bulkRemainingKeys">0</span>
+            </div>
             <div class="bulk-stat">
               <span class="bulk-stat-label">Wins Logged</span>
               <span class="bulk-stat-value" id="bulkWinsLogged">0</span>
@@ -131,15 +147,30 @@
 
       <div id="quickButtons" class="button-grid"></div>
 
+      <div id="ashRow" class="ash-row">
+        <button id="addAshBtn" class="btn btn-secondary">Add Ash</button>
+        <span class="ash-count-indicator" id="ashCountIndicator">
+          <span class="ash-count-value" id="ashCountValue">0</span>
+          <span class="ash-count-label">ash this month</span>
+        </span>
+      </div>
+
       <div class="divider"></div>
 
       <div id="creditsRow">
-        <label class="field-label">Add Credits</label>
+        <div class="credits-header-row">
+          <label class="field-label">Add Credits</label>
+          <span class="credits-total-indicator" id="creditsTotalIndicator">
+            <span class="credits-total-value" id="creditsTotalValue">0</span>
+            <span class="credits-total-label">credits this month</span>
+          </span>
+        </div>
         <div class="credits-quick-row">
           <button type="button" class="btn btn-secondary credit-quick-btn" data-credits="250">+250</button>
           <button type="button" class="btn btn-secondary credit-quick-btn" data-credits="300">+300</button>
           <button type="button" class="btn btn-secondary credit-quick-btn" data-credits="500">+500</button>
           <button type="button" class="btn btn-secondary credit-quick-btn" data-credits="750">+750</button>
+          <button type="button" class="btn btn-secondary credit-quick-btn" data-credits="1000">+1000</button>
         </div>
         <div class="credits-manual-row">
           <div class="field">
@@ -148,10 +179,6 @@
           </div>
           <button id="addCreditsBtn" class="btn">Add Credits</button>
         </div>
-      </div>
-
-      <div class="ash-row">
-        <button id="addAshBtn" class="btn btn-secondary">Add Ash</button>
       </div>
 
       <div class="small subtle">

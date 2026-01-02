@@ -23,7 +23,12 @@ const els = {
   creditsRow: document.getElementById("creditsRow"),
   creditsAmount: document.getElementById("creditsAmount"),
   addCreditsBtn: document.getElementById("addCreditsBtn"),
+  creditsTotalIndicator: document.getElementById("creditsTotalIndicator"),
+  creditsTotalValue: document.getElementById("creditsTotalValue"),
+  ashRow: document.getElementById("ashRow"),
   addAshBtn: document.getElementById("addAshBtn"),
+  ashCountIndicator: document.getElementById("ashCountIndicator"),
+  ashCountValue: document.getElementById("ashCountValue"),
 
   summaryKeys: document.getElementById("summaryKeys"),
   summarySits: document.getElementById("summarySits"),
@@ -49,7 +54,14 @@ const els = {
   bulkSessionToggle: document.getElementById("bulkSessionToggle"),
   bulkSessionUI: document.getElementById("bulkSessionUI"),
   normalQuickAddUI: document.getElementById("normalQuickAddUI"),
+  bulkTotalKeys: document.getElementById("bulkTotalKeys"),
+  totalKeysDown: document.getElementById("totalKeysDown"),
+  totalKeysUp: document.getElementById("totalKeysUp"),
   bulkBatchTotal: document.getElementById("bulkBatchTotal"),
+  batchTotalDown: document.getElementById("batchTotalDown"),
+  batchTotalUp: document.getElementById("batchTotalUp"),
+  bulkRemainingKeys: document.getElementById("bulkRemainingKeys"),
+  remainingKeysStat: document.getElementById("remainingKeysStat"),
   bulkWinsLogged: document.getElementById("bulkWinsLogged"),
   bulkInferredAsh: document.getElementById("bulkInferredAsh"),
   bulkWarning: document.getElementById("bulkWarning"),
@@ -179,6 +191,35 @@ function updateQuantityHint() {
   }
 }
 
+function updateAshCountIndicator() {
+  if (!els.ashCountValue) return;
+  const state = ensureDefaultState();
+  const month = getSelectedMonth();
+  const system = getSelectedSystem();
+
+  // Count ash for current month and system
+  const ashCount = state.events.filter(e =>
+    e.month === month &&
+    e.system === system &&
+    e.resultType === "ash"
+  ).length;
+
+  els.ashCountValue.textContent = ashCount;
+}
+
+function updateCreditsTotalIndicator() {
+  if (!els.creditsTotalValue) return;
+  const state = ensureDefaultState();
+  const month = getSelectedMonth();
+
+  // Sum credits for current month (SITS only)
+  const creditsTotal = state.events
+    .filter(e => e.month === month && e.system === "sits" && e.resultType === "credits")
+    .reduce((sum, e) => sum + (e.creditsAmount || 0), 0);
+
+  els.creditsTotalValue.textContent = creditsTotal.toLocaleString();
+}
+
 function getMonthConfig(month) {
   const cfg = window.PRIZE_CONFIG || {};
   return cfg[month] || null;
@@ -276,6 +317,8 @@ function renderQuickAdd() {
     } else {
       els.quickButtons.innerHTML = `<div class="subtle">bsims hasn't updated this month's prizes yet.</div>`;
     }
+    updateAshCountIndicator();
+    updateCreditsTotalIndicator();
     return;
   }
 
@@ -295,6 +338,8 @@ function renderQuickAdd() {
 
     if (!prizes.length) {
       els.quickButtons.innerHTML = `<div class="subtle">bsims hasn't updated this month's prizes yet.</div>`;
+      updateAshCountIndicator();
+      updateCreditsTotalIndicator();
       return;
     }
 
@@ -331,6 +376,8 @@ function renderQuickAdd() {
     const flat = sections.flatMap(s => s.items);
     if (!flat.length) {
       els.quickButtons.innerHTML = `<div class="subtle">bsims hasn't updated this month's prizes yet.</div>`;
+      updateAshCountIndicator();
+      updateCreditsTotalIndicator();
       return;
     }
 
@@ -362,6 +409,9 @@ function renderQuickAdd() {
       }
     }
   }
+
+  updateAshCountIndicator();
+  updateCreditsTotalIndicator();
 }
 
 function makePrizeButton({ label, badge, badgeClass, onClick, count = 0, onSubtract }) {
@@ -1132,7 +1182,10 @@ function updateBulkSessionUI() {
   els.normalQuickAddUI.style.display = enabled ? "none" : "block";
 
   if (enabled) {
-    // Restore batch total from session
+    // Restore values from session
+    if (session.totalKeys) {
+      els.bulkTotalKeys.value = session.totalKeys;
+    }
     if (session.batchTotal) {
       els.bulkBatchTotal.value = session.batchTotal;
     }
@@ -1292,9 +1345,11 @@ function renderBulkPrizeList() {
 
 function updateBulkStats() {
   const session = loadBulkSession();
+  const totalKeys = parseInt(els.bulkTotalKeys.value, 10) || 0;
   const batchTotal = parseInt(els.bulkBatchTotal.value, 10) || 0;
 
-  // Save batch total to session
+  // Save to session
+  session.totalKeys = totalKeys || null;
   session.batchTotal = batchTotal || null;
   saveBulkSession(session);
 
@@ -1315,9 +1370,21 @@ function updateBulkStats() {
   let inferredAsh = batchTotal > 0 ? Math.max(0, batchTotal - totalWins) : 0;
   const winsExceedTotal = batchTotal > 0 && totalWins > batchTotal;
 
+  // Calculate remaining keys
+  const remainingKeys = totalKeys > 0 ? Math.max(0, totalKeys - batchTotal) : 0;
+
+  // Update UI
   els.bulkWinsLogged.textContent = totalWins;
   els.bulkInferredAsh.textContent = inferredAsh;
   els.bulkWarning.style.display = winsExceedTotal ? "block" : "none";
+
+  // Show/hide remaining keys stat
+  if (totalKeys > 0) {
+    els.remainingKeysStat.style.display = "block";
+    els.bulkRemainingKeys.textContent = remainingKeys;
+  } else {
+    els.remainingKeysStat.style.display = "none";
+  }
 }
 
 function addBulkCustomCredits() {
@@ -1348,9 +1415,11 @@ function clearBulkSession() {
   const session = loadBulkSession();
   session.prizes = {};
   session.credits = {};
+  session.totalKeys = null;
   session.batchTotal = null;
   saveBulkSession(session);
 
+  els.bulkTotalKeys.value = "";
   els.bulkBatchTotal.value = "";
   renderBulkPrizeList();
   updateBulkStats();
@@ -1509,11 +1578,13 @@ function submitBulkSession() {
   const newSession = loadBulkSession();
   newSession.prizes = {};
   newSession.credits = {};
+  newSession.totalKeys = null;
   newSession.batchTotal = null;
   saveBulkSession(newSession);
 
   // Hide modal and refresh
   hideBulkConfirmModal();
+  els.bulkTotalKeys.value = "";
   els.bulkBatchTotal.value = "";
   renderBulkPrizeList();
   updateBulkStats();
@@ -1596,7 +1667,37 @@ function submitBulkSession() {
 
   // Bulk Session Mode event listeners
   els.bulkSessionToggle.addEventListener("change", toggleBulkSessionMode);
+  els.bulkTotalKeys.addEventListener("input", updateBulkStats);
   els.bulkBatchTotal.addEventListener("input", updateBulkStats);
+
+  // Stepper buttons for Total Keys
+  els.totalKeysDown.addEventListener("click", () => {
+    let val = parseInt(els.bulkTotalKeys.value, 10) || 0;
+    if (val > 0) {
+      els.bulkTotalKeys.value = val - 1;
+      updateBulkStats();
+    }
+  });
+  els.totalKeysUp.addEventListener("click", () => {
+    let val = parseInt(els.bulkTotalKeys.value, 10) || 0;
+    els.bulkTotalKeys.value = val + 1;
+    updateBulkStats();
+  });
+
+  // Stepper buttons for Batch Total
+  els.batchTotalDown.addEventListener("click", () => {
+    let val = parseInt(els.bulkBatchTotal.value, 10) || 0;
+    if (val > 0) {
+      els.bulkBatchTotal.value = val - 1;
+      updateBulkStats();
+    }
+  });
+  els.batchTotalUp.addEventListener("click", () => {
+    let val = parseInt(els.bulkBatchTotal.value, 10) || 0;
+    els.bulkBatchTotal.value = val + 1;
+    updateBulkStats();
+  });
+
   els.bulkCreditsCustomBtn.addEventListener("click", addBulkCustomCredits);
   els.bulkReviewBtn.addEventListener("click", showBulkReviewModal);
   els.bulkClearBtn.addEventListener("click", clearBulkSession);
