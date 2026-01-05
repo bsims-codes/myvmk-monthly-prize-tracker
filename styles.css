@@ -849,10 +849,18 @@ select:focus, input:focus{
   border-radius: 10px;
 }
 
+.bulk-prize-item .badge{
+  flex-shrink: 0;
+}
+
 .bulk-prize-item .prize-name{
   flex: 1;
+  min-width: 0;
   font-weight: 500;
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qty-stepper{
@@ -863,6 +871,7 @@ select:focus, input:focus{
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .qty-arrow{

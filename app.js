@@ -938,7 +938,7 @@ function escapeHtml(str) {
 
 /* ---------- Prize Gallery ---------- */
 
-let selectedGallerySystem = "sits";
+let selectedGallerySystem = "keys";
 
 function renderPrizeGallery() {
   const month = getSelectedMonth();
