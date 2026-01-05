@@ -2013,3 +2013,44 @@ if (cloudEls.syncNow) {
 if (cloudEls.clearCloudSyncSettings) {
   cloudEls.clearCloudSyncSettings.addEventListener("click", clearCloudSyncSettingsHandler);
 }
+
+/* ---------- Hamburger Menu Toggle ---------- */
+
+const menuToggle = document.getElementById("menuToggle");
+const dropdownMenu = document.getElementById("dropdownMenu");
+
+function toggleDropdownMenu() {
+  const isVisible = dropdownMenu.style.display === "block";
+  dropdownMenu.style.display = isVisible ? "none" : "block";
+}
+
+function closeDropdownMenu() {
+  dropdownMenu.style.display = "none";
+}
+
+if (menuToggle) {
+  menuToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleDropdownMenu();
+  });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (dropdownMenu && !dropdownMenu.contains(e.target) && e.target !== menuToggle) {
+    closeDropdownMenu();
+  }
+});
+
+// Close dropdown when clicking a menu item
+if (dropdownMenu) {
+  dropdownMenu.addEventListener("click", (e) => {
+    // Don't close if clicking on the file input label itself (let it open the file picker)
+    if (e.target.tagName === "LABEL" || e.target.closest("label")) {
+      // Keep menu open briefly for file picker
+      setTimeout(closeDropdownMenu, 100);
+    } else {
+      closeDropdownMenu();
+    }
+  });
+}

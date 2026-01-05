@@ -1140,3 +1140,96 @@ select:focus, input:focus{
 .cloud-sync-help li{
   margin: 4px 0;
 }
+
+/* Hamburger Menu & Dropdown */
+.dropdown-menu-wrapper{
+  position: relative;
+}
+
+.menu-toggle{
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.menu-toggle:hover{
+  background: rgba(255,255,255,.06);
+  border-color: var(--accent);
+}
+
+.hamburger-icon{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 20px;
+}
+
+.hamburger-icon span{
+  display: block;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.menu-toggle:hover .hamburger-icon span{
+  background: var(--accent);
+}
+
+.dropdown-menu{
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.4);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.dropdown-item:hover{
+  background: rgba(255,255,255,.06);
+}
+
+.dropdown-item-danger{
+  color: var(--danger);
+}
+
+.dropdown-item-danger:hover{
+  background: rgba(255,92,122,.1);
+}
+
+.dropdown-icon{
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.dropdown-divider{
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}

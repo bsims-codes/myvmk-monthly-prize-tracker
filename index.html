@@ -21,13 +21,35 @@
           <span id="themeIcon">🌙</span>
           <span id="themeLabel">Dark</span>
         </button>
-        <button id="cloudSyncBtn" class="btn btn-secondary">Cloud Sync</button>
-        <button id="exportBtn" class="btn">Export</button>
-        <label class="btn btn-secondary">
-          Import
-          <input id="importFile" type="file" accept="application/json" hidden />
-        </label>
-        <button id="resetBtn" class="btn btn-danger">Reset Local Data</button>
+        <div class="dropdown-menu-wrapper">
+          <button id="menuToggle" class="menu-toggle" aria-label="Menu">
+            <span class="hamburger-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </button>
+          <div id="dropdownMenu" class="dropdown-menu" style="display: none;">
+            <button id="cloudSyncBtn" class="dropdown-item">
+              <span class="dropdown-icon">☁️</span>
+              Cloud Sync
+            </button>
+            <button id="exportBtn" class="dropdown-item">
+              <span class="dropdown-icon">💾</span>
+              Export Data
+            </button>
+            <label class="dropdown-item">
+              <span class="dropdown-icon">📥</span>
+              Import Data
+              <input id="importFile" type="file" accept="application/json" hidden />
+            </label>
+            <div class="dropdown-divider"></div>
+            <button id="resetBtn" class="dropdown-item dropdown-item-danger">
+              <span class="dropdown-icon">🗑️</span>
+              Reset Local Data
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
