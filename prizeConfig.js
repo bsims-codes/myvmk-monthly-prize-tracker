@@ -76,9 +76,21 @@ window.PRIZE_CONFIG = {
   },
   "January 2026": {
     keys: {
-      bronze: [],
-      silver: [],
-      gold: []
+      bronze: [
+        { id: "bronze_disco_floor_freeze", name: "Disco Floor - Freeze" },
+        { id: "bronze_ballroom_chandelier_silver", name: "Ballroom Chandelier - Silver" },
+        { id: "bronze_ballroom_chandelier_ww", name: "Ballroom Chandelier - Winter Wonderland" }
+      ],
+      silver: [
+        { id: "silver_symphony_sorcery_pin", name: "Symphony of Sorcery (Pin)" },
+        { id: "silver_bed_fantasia", name: "Bed - Fantasia" },
+        { id: "silver_column_ww", name: "Column - Winter Wonderland" }
+      ],
+      gold: [
+        { id: "gold_winter_black_beanie", name: "Winter Black Beanie" },
+        { id: "gold_winter_black_jacket", name: "Winter Black Jacket" },
+        { id: "gold_baseball_cap_arctic_tundra", name: "Baseball Cap Reversed - Arctic Tundra Sparkle" }
+      ]
     },
     sits: {
       common: [],
