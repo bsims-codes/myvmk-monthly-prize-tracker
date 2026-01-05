@@ -93,7 +93,14 @@ window.PRIZE_CONFIG = {
       ]
     },
     sits: {
-      common: [],
+      theme: "Gingerbread Princess",
+      common: [
+        { id: "sits_gb_ariel", name: "Ariel" },
+        { id: "sits_gb_belle", name: "Belle" },
+        { id: "sits_gb_cinderella", name: "Cinderella" },
+        { id: "sits_gb_snow_white", name: "Snow White" },
+        { id: "sits_gb_tiana", name: "Tiana" }
+      ],
       rare: [],
       ultra: [],
       creditsEnabled: true
