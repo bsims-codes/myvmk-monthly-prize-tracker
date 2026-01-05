@@ -1613,6 +1613,8 @@ function submitBulkSession() {
       updateBulkSessionUI();
       renderQuickAdd();
       renderSummary();
+      // Sync with gallery toggle
+      setGallerySystem(btn.dataset.system);
     });
   });
 
