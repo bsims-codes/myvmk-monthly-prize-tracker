@@ -1072,3 +1072,71 @@ select:focus, input:focus{
   .bulk-session-stats{ width: 100%; }
   .bulk-credits-custom{ flex-wrap: wrap; }
 }
+
+/* Cloud Sync Styles */
+.cloud-sync-content{
+  margin-bottom: 16px;
+}
+
+.cloud-sync-content h4{
+  margin: 16px 0 8px 0;
+  font-size: 14px;
+}
+
+.cloud-sync-content ol{
+  margin: 0;
+  padding-left: 20px;
+}
+
+.cloud-sync-content ol li{
+  margin: 4px 0;
+}
+
+.cloud-sync-content a{
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.cloud-sync-content a:hover{
+  text-decoration: underline;
+}
+
+.cloud-sync-status{
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--card2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.cloud-sync-status.success{
+  border-color: var(--ok);
+  background: rgba(94,227,155,.1);
+}
+
+.cloud-sync-status.error{
+  border-color: var(--danger);
+  background: rgba(255,92,122,.1);
+}
+
+.cloud-sync-actions{
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.cloud-sync-help{
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.cloud-sync-help ul{
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+.cloud-sync-help li{
+  margin: 4px 0;
+}

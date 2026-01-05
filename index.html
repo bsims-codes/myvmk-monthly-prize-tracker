@@ -21,6 +21,7 @@
           <span id="themeIcon">🌙</span>
           <span id="themeLabel">Dark</span>
         </button>
+        <button id="cloudSyncBtn" class="btn btn-secondary">Cloud Sync</button>
         <button id="exportBtn" class="btn">Export</button>
         <label class="btn btn-secondary">
           Import
@@ -262,6 +263,60 @@
       <div class="modal-actions">
         <button id="bulkConfirmSubmit" class="btn">Confirm & Add to Stats</button>
         <button id="bulkConfirmCancel" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud Sync Modal -->
+  <div id="cloudSyncModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Cloud Sync via GitHub Gist</h3>
+      <div class="cloud-sync-content">
+        <p class="subtle">Sync your data across devices using GitHub Gists. Your data remains private and secure.</p>
+
+        <div id="cloudSyncStatus" class="cloud-sync-status"></div>
+
+        <div id="cloudSyncSetup" class="cloud-sync-setup">
+          <h4>Setup Instructions</h4>
+          <ol class="subtle small">
+            <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank">GitHub Tokens</a> and create a new token</li>
+            <li>Give it a name like "MyVMK Prize Tracker"</li>
+            <li>Set expiration (or choose "No expiration" for convenience)</li>
+            <li>Under "Select scopes", check <strong>gist</strong></li>
+            <li>Click "Generate token" and copy it</li>
+            <li>Paste your token below</li>
+          </ol>
+
+          <div class="field">
+            <label for="githubToken">GitHub Personal Access Token</label>
+            <input id="githubToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
+          </div>
+
+          <div class="field">
+            <label for="gistId">Gist ID (leave empty to create new)</label>
+            <input id="gistId" type="text" placeholder="Optional: existing gist ID" />
+            <p class="subtle small">If you already have a gist for this tracker, paste its ID here. Otherwise, leave empty and a new private gist will be created on first sync.</p>
+          </div>
+        </div>
+
+        <div id="cloudSyncActions" class="cloud-sync-actions">
+          <button id="saveCloudSyncSettings" class="btn">Save Settings</button>
+          <button id="syncNow" class="btn btn-secondary" disabled>Sync Now</button>
+          <button id="clearCloudSyncSettings" class="btn btn-danger btn-small">Clear Settings</button>
+        </div>
+
+        <div id="cloudSyncHelp" class="cloud-sync-help subtle small">
+          <strong>How it works:</strong>
+          <ul>
+            <li><strong>Sync Now</strong> uploads your current data and downloads any changes from GitHub</li>
+            <li>Data is automatically merged - events from both sources are combined</li>
+            <li>Your data is stored as a private Gist on your GitHub account</li>
+            <li>Local storage remains the primary source - cloud is just for backup/sync</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="closeCloudSyncModal" class="btn btn-secondary">Close</button>
       </div>
     </div>
   </div>

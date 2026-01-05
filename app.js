@@ -1721,3 +1721,295 @@ function submitBulkSession() {
 
   renderAll();
 })();
+
+/* ---------- Cloud Sync (GitHub Gist) ---------- */
+
+const GITHUB_TOKEN_KEY = "myvmk_github_token";
+const GIST_ID_KEY = "myvmk_gist_id";
+const GIST_FILENAME = "myvmk-prize-tracker-data.json";
+
+const cloudEls = {
+  cloudSyncBtn: document.getElementById("cloudSyncBtn"),
+  cloudSyncModal: document.getElementById("cloudSyncModal"),
+  closeCloudSyncModal: document.getElementById("closeCloudSyncModal"),
+  githubToken: document.getElementById("githubToken"),
+  gistId: document.getElementById("gistId"),
+  saveCloudSyncSettings: document.getElementById("saveCloudSyncSettings"),
+  syncNow: document.getElementById("syncNow"),
+  clearCloudSyncSettings: document.getElementById("clearCloudSyncSettings"),
+  cloudSyncStatus: document.getElementById("cloudSyncStatus")
+};
+
+function loadGitHubSettings() {
+  return {
+    token: localStorage.getItem(GITHUB_TOKEN_KEY) || "",
+    gistId: localStorage.getItem(GIST_ID_KEY) || ""
+  };
+}
+
+function saveGitHubSettings(token, gistId) {
+  if (token) {
+    localStorage.setItem(GITHUB_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(GITHUB_TOKEN_KEY);
+  }
+
+  if (gistId) {
+    localStorage.setItem(GIST_ID_KEY, gistId);
+  } else {
+    localStorage.removeItem(GIST_ID_KEY);
+  }
+}
+
+function clearGitHubSettings() {
+  localStorage.removeItem(GITHUB_TOKEN_KEY);
+  localStorage.removeItem(GIST_ID_KEY);
+}
+
+function showCloudSyncModal() {
+  const settings = loadGitHubSettings();
+  cloudEls.githubToken.value = settings.token;
+  cloudEls.gistId.value = settings.gistId;
+
+  updateCloudSyncStatus();
+  cloudEls.cloudSyncModal.style.display = "flex";
+}
+
+function hideCloudSyncModal() {
+  cloudEls.cloudSyncModal.style.display = "none";
+}
+
+function updateCloudSyncStatus() {
+  const settings = loadGitHubSettings();
+  const hasToken = !!settings.token;
+  const hasGist = !!settings.gistId;
+
+  cloudEls.syncNow.disabled = !hasToken;
+
+  if (hasToken && hasGist) {
+    cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
+    cloudEls.cloudSyncStatus.innerHTML = `<strong>Connected</strong><br><span class="subtle small">Gist ID: ${escapeHtml(settings.gistId)}</span>`;
+  } else if (hasToken) {
+    cloudEls.cloudSyncStatus.className = "cloud-sync-status";
+    cloudEls.cloudSyncStatus.innerHTML = `<strong>Token Saved</strong><br><span class="subtle small">Ready to sync. A new private Gist will be created on first sync.</span>`;
+  } else {
+    cloudEls.cloudSyncStatus.className = "cloud-sync-status";
+    cloudEls.cloudSyncStatus.innerHTML = `<span class="subtle">Not configured. Follow the setup instructions below.</span>`;
+  }
+}
+
+async function createNewGist(token, data) {
+  const response = await fetch("https://api.github.com/gists", {
+    method: "POST",
+    headers: {
+      "Authorization": `token ${token}`,
+      "Content-Type": "application/json",
+      "Accept": "application/vnd.github.v3+json"
+    },
+    body: JSON.stringify({
+      description: "MyVMK Prize Tracker - Synced Data",
+      public: false,
+      files: {
+        [GIST_FILENAME]: {
+          content: JSON.stringify(data, null, 2)
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || `GitHub API error: ${response.status}`);
+  }
+
+  const gist = await response.json();
+  return gist.id;
+}
+
+async function updateGist(token, gistId, data) {
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `token ${token}`,
+      "Content-Type": "application/json",
+      "Accept": "application/vnd.github.v3+json"
+    },
+    body: JSON.stringify({
+      files: {
+        [GIST_FILENAME]: {
+          content: JSON.stringify(data, null, 2)
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || `GitHub API error: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+async function fetchGist(token, gistId) {
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: {
+      "Authorization": `token ${token}`,
+      "Accept": "application/vnd.github.v3+json"
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || `GitHub API error: ${response.status}`);
+  }
+
+  const gist = await response.json();
+  const fileContent = gist.files[GIST_FILENAME]?.content;
+
+  if (!fileContent) {
+    throw new Error("Data file not found in Gist");
+  }
+
+  return JSON.parse(fileContent);
+}
+
+function mergeStates(local, remote) {
+  // Merge events by ID (deduplication)
+  const seen = new Set();
+  const merged = [];
+
+  // Add all local events first
+  for (const ev of local.events) {
+    if (ev && ev.id) {
+      seen.add(ev.id);
+      merged.push(ev);
+    }
+  }
+
+  // Add remote events that aren't already in local
+  for (const ev of remote.events) {
+    if (ev && ev.id && !seen.has(ev.id)) {
+      seen.add(ev.id);
+      merged.push(ev);
+    }
+  }
+
+  // Sort by createdAt timestamp
+  merged.sort((a, b) => {
+    const aTime = new Date(a.createdAt || 0).getTime();
+    const bTime = new Date(b.createdAt || 0).getTime();
+    return aTime - bTime;
+  });
+
+  // Return merged state, keeping local's selectedMonth
+  return {
+    ...local,
+    events: merged,
+    version: Math.max(local.version || 1, remote.version || 1)
+  };
+}
+
+async function syncWithGitHub() {
+  const settings = loadGitHubSettings();
+
+  if (!settings.token) {
+    alert("Please configure your GitHub token first.");
+    showCloudSyncModal();
+    return;
+  }
+
+  try {
+    cloudEls.syncNow.disabled = true;
+    cloudEls.syncNow.textContent = "Syncing...";
+
+    const localState = ensureDefaultState();
+    let mergedState = localState;
+
+    if (settings.gistId) {
+      // Fetch from existing Gist and merge
+      try {
+        const remoteState = await fetchGist(settings.token, settings.gistId);
+        mergedState = mergeStates(localState, remoteState);
+
+        // Save merged state locally
+        saveState(mergedState);
+
+        // Update Gist with merged state
+        await updateGist(settings.token, settings.gistId, mergedState);
+
+        cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
+        cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Complete!</strong><br><span class="subtle small">Last synced: ${new Date().toLocaleString()}</span>`;
+      } catch (error) {
+        throw new Error(`Failed to sync with existing Gist: ${error.message}`);
+      }
+    } else {
+      // Create new Gist
+      const newGistId = await createNewGist(settings.token, localState);
+      saveGitHubSettings(settings.token, newGistId);
+
+      cloudEls.gistId.value = newGistId;
+      cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
+      cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Complete!</strong><br><span class="subtle small">New Gist created: ${escapeHtml(newGistId)}<br>Last synced: ${new Date().toLocaleString()}</span>`;
+    }
+
+    // Refresh UI
+    renderAll();
+
+    alert("Sync successful! Your data has been backed up to GitHub.");
+  } catch (error) {
+    cloudEls.cloudSyncStatus.className = "cloud-sync-status error";
+    cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Failed</strong><br><span class="subtle small">${escapeHtml(error.message)}</span>`;
+    alert(`Sync failed: ${error.message}`);
+  } finally {
+    cloudEls.syncNow.disabled = false;
+    cloudEls.syncNow.textContent = "Sync Now";
+  }
+}
+
+function saveCloudSyncSettingsHandler() {
+  const token = cloudEls.githubToken.value.trim();
+  const gistId = cloudEls.gistId.value.trim();
+
+  if (!token) {
+    alert("Please enter a GitHub Personal Access Token.");
+    return;
+  }
+
+  saveGitHubSettings(token, gistId);
+  updateCloudSyncStatus();
+  alert("Settings saved! You can now use 'Sync Now' to back up your data.");
+}
+
+function clearCloudSyncSettingsHandler() {
+  if (!confirm("This will remove your GitHub token and Gist ID from this browser. Your data in GitHub will NOT be deleted. Continue?")) {
+    return;
+  }
+
+  clearGitHubSettings();
+  cloudEls.githubToken.value = "";
+  cloudEls.gistId.value = "";
+  updateCloudSyncStatus();
+  alert("Settings cleared.");
+}
+
+// Initialize Cloud Sync event listeners
+if (cloudEls.cloudSyncBtn) {
+  cloudEls.cloudSyncBtn.addEventListener("click", showCloudSyncModal);
+}
+
+if (cloudEls.closeCloudSyncModal) {
+  cloudEls.closeCloudSyncModal.addEventListener("click", hideCloudSyncModal);
+}
+
+if (cloudEls.saveCloudSyncSettings) {
+  cloudEls.saveCloudSyncSettings.addEventListener("click", saveCloudSyncSettingsHandler);
+}
+
+if (cloudEls.syncNow) {
+  cloudEls.syncNow.addEventListener("click", syncWithGitHub);
+}
+
+if (cloudEls.clearCloudSyncSettings) {
+  cloudEls.clearCloudSyncSettings.addEventListener("click", clearCloudSyncSettingsHandler);
+}
