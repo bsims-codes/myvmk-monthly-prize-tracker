@@ -5,6 +5,117 @@
    - Export/Import JSON
 */
 
+/* ---------- Analytics Helper ---------- */
+
+function trackEvent(eventName, params = {}) {
+  if (typeof gtag === "function") {
+    gtag("event", eventName, params);
+  }
+}
+
+// Set user properties for per-user analysis in BigQuery
+function updateUserProperties() {
+  if (typeof gtag !== "function") return;
+
+  const state = loadState();
+  if (!state || !state.events) return;
+
+  const events = state.events;
+
+  // Calculate Chest Keys stats
+  const keysEvents = events.filter(e => e.system === "keys");
+  const keysTotal = keysEvents.length;
+  const keysPrizes = keysEvents.filter(e => e.resultType === "prize").length;
+  const keysAsh = keysEvents.filter(e => e.resultType === "ash").length;
+  const keysWinRate = keysTotal > 0 ? Math.round((keysPrizes / keysTotal) * 100) : 0;
+
+  // Calculate SITS stats
+  const sitsEvents = events.filter(e => e.system === "sits");
+  const sitsTotal = sitsEvents.length;
+  const sitsPrizes = sitsEvents.filter(e => e.resultType === "prize").length;
+  const sitsCreditsWins = sitsEvents.filter(e => e.resultType === "credits").length;
+  const sitsAsh = sitsEvents.filter(e => e.resultType === "ash").length;
+  const sitsWinRate = sitsTotal > 0 ? Math.round(((sitsPrizes + sitsCreditsWins) / sitsTotal) * 100) : 0;
+  const sitsCreditsTotal = sitsEvents
+    .filter(e => e.resultType === "credits" && Number.isFinite(e.creditsAmount))
+    .reduce((sum, e) => sum + e.creditsAmount, 0);
+
+  // Get user preferences
+  const theme = localStorage.getItem("myvmk_theme") || "dark";
+  const hasCloudSync = !!localStorage.getItem("myvmk_github_token");
+
+  // Set user properties (these persist and are available in BigQuery)
+  gtag("set", "user_properties", {
+    total_keys_used: keysTotal,
+    keys_prizes_won: keysPrizes,
+    keys_ash_count: keysAsh,
+    keys_win_rate_pct: keysWinRate,
+    total_sits_used: sitsTotal,
+    sits_prizes_won: sitsPrizes,
+    sits_credits_wins: sitsCreditsWins,
+    sits_ash_count: sitsAsh,
+    sits_win_rate_pct: sitsWinRate,
+    sits_credits_total: sitsCreditsTotal,
+    total_events_logged: events.length,
+    theme_preference: theme,
+    cloud_sync_enabled: hasCloudSync
+  });
+}
+
+// Track initial page load with user preferences
+function trackPageLoad() {
+  const theme = localStorage.getItem("myvmk_theme") || "dark";
+  const hasCloudSync = !!localStorage.getItem("myvmk_github_token");
+  const hasGistId = !!localStorage.getItem("myvmk_gist_id");
+  const state = loadState();
+  const totalEvents = state?.events?.length || 0;
+
+  // Set user properties on page load
+  updateUserProperties();
+
+  trackEvent("page_load", {
+    theme_preference: theme,
+    cloud_sync_configured: hasCloudSync,
+    gist_connected: hasGistId,
+    total_logged_events: totalEvents
+  });
+}
+
+// Send a summary snapshot event (for tracking stats over time)
+function trackSummarySnapshot() {
+  const state = loadState();
+  if (!state || !state.events) return;
+
+  const events = state.events;
+
+  // Chest Keys stats
+  const keysEvents = events.filter(e => e.system === "keys");
+  const keysTotal = keysEvents.length;
+  const keysPrizes = keysEvents.filter(e => e.resultType === "prize").length;
+  const keysWinRate = keysTotal > 0 ? Math.round((keysPrizes / keysTotal) * 100) : 0;
+
+  // SITS stats
+  const sitsEvents = events.filter(e => e.system === "sits");
+  const sitsTotal = sitsEvents.length;
+  const sitsPrizes = sitsEvents.filter(e => e.resultType === "prize").length;
+  const sitsCreditsWins = sitsEvents.filter(e => e.resultType === "credits").length;
+  const sitsWinRate = sitsTotal > 0 ? Math.round(((sitsPrizes + sitsCreditsWins) / sitsTotal) * 100) : 0;
+  const sitsCreditsTotal = sitsEvents
+    .filter(e => e.resultType === "credits" && Number.isFinite(e.creditsAmount))
+    .reduce((sum, e) => sum + e.creditsAmount, 0);
+
+  trackEvent("stats_snapshot", {
+    total_keys: keysTotal,
+    keys_win_rate: keysWinRate,
+    keys_prizes: keysPrizes,
+    total_sits: sitsTotal,
+    sits_win_rate: sitsWinRate,
+    sits_prizes: sitsPrizes,
+    sits_credits_total: sitsCreditsTotal,
+    total_events: events.length
+  });
+}
+
 const STORAGE_KEY = "myvmk_prize_tracker_v1";
 const BULK_SESSION_KEY = "myvmk_bulk_session_v1";
 
@@ -280,6 +391,7 @@ function buildMonthTabs(state) {
 function selectMonth(month) {
   selectedMonth = month;
   updateActiveTab();
+  trackEvent("select_month", { month });
   renderAll();
 }
 
@@ -476,6 +588,15 @@ function addPrizeEvent({ system, keyColor = null, sitsTier = null, prizeId, priz
   state.selectedMonth = month;
   saveState(state);
 
+  trackEvent("log_prize", {
+    system,
+    key_color: keyColor,
+    sits_tier: sitsTier,
+    prize_name: prizeName,
+    quantity
+  });
+
+  updateUserProperties();
   renderAll();
 }
 
@@ -525,6 +646,12 @@ function addCreditsEvent() {
   state.selectedMonth = month;
   saveState(state);
 
+  trackEvent("log_credits", {
+    amount: Math.floor(amt),
+    input_type: "custom"
+  });
+
+  updateUserProperties();
   els.creditsAmount.value = "";
   renderAll();
 }
@@ -551,6 +678,12 @@ function addQuickCreditsEvent(amount) {
   state.selectedMonth = month;
   saveState(state);
 
+  trackEvent("log_credits", {
+    amount,
+    input_type: "quick_button"
+  });
+
+  updateUserProperties();
   renderAll();
 }
 
@@ -581,6 +714,13 @@ function addAshEvent() {
   state.selectedMonth = month;
   saveState(state);
 
+  trackEvent("log_ash", {
+    system,
+    key_color: keyColor,
+    quantity
+  });
+
+  updateUserProperties();
   renderAll();
 }
 
@@ -806,6 +946,7 @@ function deleteSelectedMonth() {
   state.events = state.events.filter(e => e.month !== month);
   const removed = before - state.events.length;
   saveState(state);
+  trackEvent("delete_month", { month, events_deleted: removed });
   renderAll();
   alert(`Deleted ${removed} event(s) for ${month}.`);
 }
@@ -822,6 +963,8 @@ function exportData() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+
+  trackEvent("export_data", { event_count: state.events.length });
 }
 
 function importData(file) {
@@ -857,6 +1000,12 @@ function importData(file) {
       saveState(next);
       buildMonthTabs(next);
       renderAll();
+      trackEvent("import_data", {
+        mode: doMerge ? "merge" : "replace",
+        imported_events: imported.events.length,
+        final_events: next.events.length
+      });
+      updateUserProperties();
       alert("Import complete.");
     } catch (e) {
       alert("Failed to import JSON. File may be corrupted.");
@@ -868,6 +1017,7 @@ function importData(file) {
 function resetAll() {
   const ok = confirm("This will delete ALL local tracker data in this browser. Continue?");
   if (!ok) return;
+  trackEvent("reset_data");
   localStorage.removeItem(STORAGE_KEY);
   ensureDefaultState();
   renderAll();
@@ -1067,6 +1217,7 @@ function setGallerySystem(system) {
     btn.classList.toggle("active", btn.dataset.system === system);
   });
 
+  trackEvent("gallery_toggle", { system });
   renderPrizeGallery();
 }
 
@@ -1080,6 +1231,7 @@ function toggleGalleryCollapse() {
   const card = els.availablePrizesCard;
   const isCollapsed = card.classList.toggle("collapsed");
   localStorage.setItem(GALLERY_COLLAPSED_KEY, isCollapsed);
+  trackEvent("gallery_collapse", { collapsed: isCollapsed });
 }
 
 function initGalleryCollapse() {
@@ -1111,7 +1263,9 @@ function setTheme(theme) {
 
 function toggleTheme() {
   const current = getStoredTheme();
-  setTheme(current === "dark" ? "light" : "dark");
+  const newTheme = current === "dark" ? "light" : "dark";
+  setTheme(newTheme);
+  trackEvent("theme_change", { theme: newTheme });
 }
 
 /* ---------- Bulk Session Mode ---------- */
@@ -1158,6 +1312,7 @@ function toggleBulkSessionMode() {
   const session = loadBulkSession();
   session.enabled = !session.enabled;
   saveBulkSession(session);
+  trackEvent("bulk_session_toggle", { enabled: session.enabled });
   updateBulkSessionUI();
 }
 
@@ -1590,7 +1745,20 @@ function submitBulkSession() {
   updateBulkStats();
   renderAll();
 
-  alert(`Batch submitted: ${Object.keys(session.prizes).length > 0 ? Object.values(session.prizes).reduce((s, p) => s + p.qty, 0) + " prizes, " : ""}${Object.keys(session.credits).length > 0 ? Object.values(session.credits).reduce((s, q) => s + q, 0) + " credit wins, " : ""}${inferredAsh} ash added.`);
+  const totalPrizesSubmitted = Object.values(session.prizes).reduce((s, p) => s + p.qty, 0);
+  const totalCreditsSubmitted = Object.values(session.credits).reduce((s, q) => s + q, 0);
+
+  trackEvent("bulk_session_submit", {
+    batch_total: batchTotal,
+    prizes_count: totalPrizesSubmitted,
+    credits_count: totalCreditsSubmitted,
+    ash_count: inferredAsh
+  });
+
+  // Update user properties after bulk submit
+  updateUserProperties();
+
+  alert(`Batch submitted: ${totalPrizesSubmitted > 0 ? totalPrizesSubmitted + " prizes, " : ""}${totalCreditsSubmitted > 0 ? totalCreditsSubmitted + " credit wins, " : ""}${inferredAsh} ash added.`);
 }
 
 /* ---------- init ---------- */
@@ -1610,6 +1778,7 @@ function submitBulkSession() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".system-toggle-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      trackEvent("system_toggle", { system: btn.dataset.system });
       updateBulkSessionUI();
       renderQuickAdd();
       renderSummary();
@@ -1623,6 +1792,7 @@ function submitBulkSession() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".key-color-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      trackEvent("key_color_select", { color: btn.dataset.color });
       renderQuickAdd();
     });
   });
@@ -1722,6 +1892,9 @@ function submitBulkSession() {
   initGalleryCollapse();
 
   renderAll();
+
+  // Initialize analytics tracking
+  trackPageLoad();
 })();
 
 /* ---------- Cloud Sync (GitHub Gist) ---------- */
@@ -1958,10 +2131,17 @@ async function syncWithGitHub() {
     // Refresh UI
     renderAll();
 
+    trackEvent("cloud_sync_success", {
+      is_new_gist: !settings.gistId,
+      event_count: mergedState.events.length
+    });
+    updateUserProperties();
+
     alert("Sync successful! Your data has been backed up to GitHub.");
   } catch (error) {
     cloudEls.cloudSyncStatus.className = "cloud-sync-status error";
     cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Failed</strong><br><span class="subtle small">${escapeHtml(error.message)}</span>`;
+    trackEvent("cloud_sync_error", { error_message: error.message });
     alert(`Sync failed: ${error.message}`);
   } finally {
     cloudEls.syncNow.disabled = false;
@@ -1980,6 +2160,7 @@ function saveCloudSyncSettingsHandler() {
 
   saveGitHubSettings(token, gistId);
   updateCloudSyncStatus();
+  trackEvent("cloud_sync_configure", { has_existing_gist: !!gistId });
   alert("Settings saved! You can now use 'Sync Now' to back up your data.");
 }
 
@@ -1992,6 +2173,7 @@ function clearCloudSyncSettingsHandler() {
   cloudEls.githubToken.value = "";
   cloudEls.gistId.value = "";
   updateCloudSyncStatus();
+  trackEvent("cloud_sync_clear");
   alert("Settings cleared.");
 }
 

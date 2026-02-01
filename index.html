@@ -1,9 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGY6GSSM9M"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-XGY6GSSM9M');
+  </script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MyVMK Monthly Prize Tracker</title>
+  <link rel="icon" type="image/x-icon" href="./gold-logo.ico" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -306,8 +316,8 @@
             <li>Give it a name like "MyVMK Prize Tracker"</li>
             <li>Set expiration (or choose "No expiration" for convenience)</li>
             <li>Under "Select scopes", check <strong>gist</strong></li>
-            <li>Click "Generate token" and copy it</li>
-            <li>Paste your token below</li>
+            <li>Click "Generate token" and <strong>immediately copy it</strong> - GitHub only shows tokens once!</li>
+            <li>Paste your token below (you can create a new token anytime if needed)</li>
           </ol>
 
           <div class="field">
@@ -318,7 +328,7 @@
           <div class="field">
             <label for="gistId">Gist ID (leave empty to create new)</label>
             <input id="gistId" type="text" placeholder="Optional: existing gist ID" />
-            <p class="subtle small">If you already have a gist for this tracker, paste its ID here. Otherwise, leave empty and a new private gist will be created on first sync.</p>
+            <p class="subtle small">Setting up a new device? Paste your Gist ID from your other device here. Starting fresh? Leave empty and a new private gist will be created on first sync. <strong>Save your Gist ID</strong> - you'll need it to sync on other devices!</p>
           </div>
         </div>
 
@@ -335,6 +345,13 @@
             <li>Data is automatically merged - events from both sources are combined</li>
             <li>Your data is stored as a private Gist on your GitHub account</li>
             <li>Local storage remains the primary source - cloud is just for backup/sync</li>
+          </ul>
+          <strong>Syncing to another device:</strong>
+          <ul>
+            <li>You need <strong>both</strong> your token and Gist ID to sync on another device</li>
+            <li>Copy the Gist ID shown above (visible when connected) and save it somewhere safe</li>
+            <li>On your other device, enter your token and paste the Gist ID, then click Sync Now</li>
+            <li>Lost your token? No problem - create a new one on GitHub and use it with your existing Gist ID</li>
           </ul>
         </div>
       </div>
