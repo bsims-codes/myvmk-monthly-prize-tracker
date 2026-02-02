@@ -126,6 +126,18 @@ window.PRIZE_CONFIG = {
         { id: "gold_dueling_flags_pirates_port", name: "Dueling Flags - Pirates & Port" },
         { id: "gold_wings_parrot", name: "Wings - Parrot" }
       ]
+    },
+    sits: {
+      theme: "POTC Parrot",
+      common: [
+        { id: "sits_potc_parrot_green", name: "Green" },
+        { id: "sits_potc_parrot_orange", name: "Orange" },
+        { id: "sits_potc_parrot_purple", name: "Purple" },
+        { id: "sits_potc_parrot_yellow", name: "Yellow" }
+      ],
+      rare: [],
+      ultra: [],
+      creditsEnabled: true
     }
   }
 };
