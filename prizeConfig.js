@@ -135,7 +135,9 @@ window.PRIZE_CONFIG = {
         { id: "sits_potc_parrot_purple", name: "Purple" },
         { id: "sits_potc_parrot_yellow", name: "Yellow" }
       ],
-      rare: [],
+      rare: [
+        { id: "sits_potc_parrot_blue", name: "Blue" }
+      ],
       ultra: [],
       creditsEnabled: true
     }
