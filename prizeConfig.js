@@ -138,7 +138,9 @@ window.PRIZE_CONFIG = {
       rare: [
         { id: "sits_potc_parrot_blue", name: "Blue" }
       ],
-      ultra: [],
+      ultra: [
+        { id: "sits_potc_parrot_red", name: "Red" }
+      ],
       creditsEnabled: true
     }
   }
