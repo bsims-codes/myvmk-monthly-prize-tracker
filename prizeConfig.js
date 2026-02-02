@@ -108,5 +108,24 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "February 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_anchor", name: "Anchor - Bronze" },
+        { id: "bronze_pirate_cannonball", name: "Pirate Cannonball" },
+        { id: "bronze_pirates_monocular_telescope", name: "Pirate's Monocular Telescope" }
+      ],
+      silver: [
+        { id: "silver_anchor", name: "Anchor - Silver" },
+        { id: "silver_pirates_treasure_small_pink_rug", name: "Pirate's Treasure Small Pink Rug" },
+        { id: "silver_pirate_cannonball_animated", name: "Pirate Cannonball (Animated)" }
+      ],
+      gold: [
+        { id: "gold_anchor", name: "Anchor - Gold" },
+        { id: "gold_dueling_flags_pirates_port", name: "Dueling Flags - Pirates & Port" },
+        { id: "gold_wings_parrot", name: "Wings - Parrot" }
+      ]
+    }
   }
 };
