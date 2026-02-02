@@ -848,23 +848,38 @@ function renderSummary() {
     els.summarySits.appendChild(outcomesDiv);
   }
 
-  // Prize wins breakdown
-  if (sitsPrizes > 0) {
-    const prizeList = Object.entries(sitsPrizeCounts)
+  // Prize wins breakdown by tier (common/rare/ultra)
+  const sitsTiers = ["common", "rare", "ultra"];
+  for (const tier of sitsTiers) {
+    const tierEvents = sitsEvents.filter(e => e.sitsTier === tier);
+    const tierPrizes = tierEvents.filter(e => e.resultType === "prize").length;
+    if (tierPrizes === 0) continue;
+
+    const tierPrizeCounts = countBy(tierEvents.filter(e => e.resultType === "prize"), e => e.prize?.name || "Unknown Prize");
+    const tierDropRate = sitsTotal ? (tierPrizes / sitsTotal) : 0;
+
+    const div = document.createElement("div");
+    div.className = "kpi";
+    div.style.gridColumn = "span 2";
+
+    let prizeList = Object.entries(tierPrizeCounts)
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => `<span class="badge">${escapeHtml(name)}: ${count}</span>`)
       .join(" ");
+    if (!prizeList) prizeList = `<span class="subtle">No prizes yet</span>`;
 
-    const prizesDiv = document.createElement("div");
-    prizesDiv.className = "kpi";
-    prizesDiv.style.gridColumn = "span 2";
-    prizesDiv.innerHTML = `
-      <div class="label">Prize Wins</div>
-      <div class="subtle" style="margin-top:6px; line-height:1.7;">
-        ${prizeList}
+    const badgeClass = tier === "common" ? "ok" : tier === "rare" ? "rare" : "ultra";
+
+    div.innerHTML = `
+      <div class="label" style="text-transform: capitalize;">${escapeHtml(tier)} Prizes</div>
+      <div style="margin-top:6px; line-height:1.7;">
+        <div style="margin-bottom:8px;">
+          <span class="badge ${badgeClass}">${tierPrizes} won (${pct(tierDropRate)})</span>
+        </div>
+        <div class="subtle">${prizeList}</div>
       </div>
     `;
-    els.summarySits.appendChild(prizesDiv);
+    els.summarySits.appendChild(div);
   }
 
   // Credits breakdown
