@@ -2061,30 +2061,37 @@ async function fetchGist(token, gistId) {
     throw new Error("Data file not found in Gist");
   }
 
-  // Always fetch from raw_url to avoid truncation issues with large files
-  // GitHub's API truncates content field for files approaching 1MB
-  if (file.raw_url) {
-    const rawResponse = await fetch(file.raw_url, {
-      headers: {
-        "Authorization": `token ${token}`,
-        "Accept": "application/vnd.github.v3.raw"
-      }
-    });
-
-    if (!rawResponse.ok) {
-      throw new Error(`Failed to fetch file content: ${rawResponse.status}`);
-    }
-
-    const fileContent = await rawResponse.text();
-    return JSON.parse(fileContent);
-  }
-
-  // Fallback to inline content for small files without raw_url
   if (!file.content) {
     throw new Error("No content available in Gist file");
   }
 
-  return JSON.parse(file.content);
+  // Try parsing inline content first
+  try {
+    return JSON.parse(file.content);
+  } catch (parseError) {
+    // If parsing fails (likely due to truncation), try fetching raw content
+    if (file.raw_url) {
+      // Try without auth headers first (raw URLs are often publicly accessible)
+      // This avoids CORS preflight issues
+      const rawResponse = await fetch(file.raw_url);
+
+      if (rawResponse.ok) {
+        const fileContent = await rawResponse.text();
+        return JSON.parse(fileContent);
+      }
+
+      throw new Error(
+        `Data file is truncated and raw fetch failed (${rawResponse.status}). ` +
+        "Your data may be too large for Gist sync."
+      );
+    }
+
+    // No raw_url available
+    throw new Error(
+      "Data file is corrupted or truncated. " +
+      "Try exporting your data locally, clearing some old entries, then re-syncing."
+    );
+  }
 }
 
 function mergeStates(local, remote) {
