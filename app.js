@@ -2055,13 +2055,36 @@ async function fetchGist(token, gistId) {
   }
 
   const gist = await response.json();
-  const fileContent = gist.files[GIST_FILENAME]?.content;
+  const file = gist.files[GIST_FILENAME];
 
-  if (!fileContent) {
+  if (!file) {
     throw new Error("Data file not found in Gist");
   }
 
-  return JSON.parse(fileContent);
+  // Always fetch from raw_url to avoid truncation issues with large files
+  // GitHub's API truncates content field for files approaching 1MB
+  if (file.raw_url) {
+    const rawResponse = await fetch(file.raw_url, {
+      headers: {
+        "Authorization": `token ${token}`,
+        "Accept": "application/vnd.github.v3.raw"
+      }
+    });
+
+    if (!rawResponse.ok) {
+      throw new Error(`Failed to fetch file content: ${rawResponse.status}`);
+    }
+
+    const fileContent = await rawResponse.text();
+    return JSON.parse(fileContent);
+  }
+
+  // Fallback to inline content for small files without raw_url
+  if (!file.content) {
+    throw new Error("No content available in Gist file");
+  }
+
+  return JSON.parse(file.content);
 }
 
 function mergeStates(local, remote) {
