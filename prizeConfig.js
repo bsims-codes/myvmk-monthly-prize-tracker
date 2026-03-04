@@ -143,5 +143,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "March 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_placeholder_1", name: "TBD" },
+        { id: "bronze_placeholder_2", name: "TBD" },
+        { id: "bronze_placeholder_3", name: "TBD" }
+      ],
+      silver: [
+        { id: "silver_placeholder_1", name: "TBD" },
+        { id: "silver_placeholder_2", name: "TBD" },
+        { id: "silver_placeholder_3", name: "TBD" }
+      ],
+      gold: [
+        { id: "gold_placeholder_1", name: "TBD" },
+        { id: "gold_placeholder_2", name: "TBD" },
+        { id: "gold_placeholder_3", name: "TBD" }
+      ]
+    },
+    sits: {
+      theme: "Flower Girls",
+      common: [
+        { id: "sits_fg_aurora", name: "Aurora" },
+        { id: "sits_fg_snow_white", name: "Snow White" },
+        { id: "sits_fg_pocahontas", name: "Pocahontas" },
+        { id: "sits_fg_mulan", name: "Mulan" }
+      ],
+      rare: [
+        { id: "sits_fg_ariel", name: "Ariel" }
+      ],
+      ultra: [
+        { id: "sits_fg_alice", name: "Alice" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
