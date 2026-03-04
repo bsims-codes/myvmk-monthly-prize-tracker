@@ -496,6 +496,43 @@ select:focus, input:focus{
 .kpi .label{ color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 .kpi .value{ font-size: 18px; font-weight: 700; }
 
+/* Event Log Filters */
+.event-log-filters{
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.filter-group{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-label{
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-select{
+  padding: 8px 12px;
+  min-width: 120px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.filter-select:focus{
+  border-color: rgba(122,162,255,.55);
+  outline: none;
+}
+
 .table-wrap{ overflow:auto; }
 .table{
   width:100%;

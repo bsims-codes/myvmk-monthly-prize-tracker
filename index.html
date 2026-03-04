@@ -255,13 +255,30 @@
         </div>
       </div>
 
+      <div class="event-log-filters">
+        <div class="filter-group">
+          <label class="filter-label">System</label>
+          <select id="filterSystem" class="filter-select">
+            <option value="all">All</option>
+            <option value="keys">Chests</option>
+            <option value="sits">SITS</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Type</label>
+          <select id="filterType" class="filter-select">
+            <option value="all">All</option>
+          </select>
+        </div>
+      </div>
+
       <div class="table-wrap">
         <table class="table" id="eventsTable">
           <thead>
             <tr>
               <th>Date</th>
               <th>System</th>
-              <th>Key</th>
+              <th>Type</th>
               <th>Result</th>
               <th>Prize / Credits</th>
               <th></th>

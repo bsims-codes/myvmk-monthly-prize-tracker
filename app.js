@@ -187,7 +187,11 @@ const els = {
   bulkConfirmModal: document.getElementById("bulkConfirmModal"),
   bulkConfirmSummary: document.getElementById("bulkConfirmSummary"),
   bulkConfirmSubmit: document.getElementById("bulkConfirmSubmit"),
-  bulkConfirmCancel: document.getElementById("bulkConfirmCancel")
+  bulkConfirmCancel: document.getElementById("bulkConfirmCancel"),
+
+  // Event log filters
+  filterSystem: document.getElementById("filterSystem"),
+  filterType: document.getElementById("filterType")
 };
 
 let selectedMonth = null;
@@ -906,19 +910,99 @@ function renderSummary() {
   }
 }
 
+function getEventLogFilters() {
+  return {
+    system: els.filterSystem?.value || "all",
+    type: els.filterType?.value || "all"
+  };
+}
+
+function updateFilterTypeOptions() {
+  if (!els.filterType) return;
+
+  const filters = getEventLogFilters();
+  const currentValue = filters.type;
+
+  // Clear existing options except "All"
+  els.filterType.innerHTML = '<option value="all">All</option>';
+
+  if (filters.system === "keys") {
+    // Key colors for chests
+    els.filterType.innerHTML += `
+      <option value="bronze">Bronze</option>
+      <option value="silver">Silver</option>
+      <option value="gold">Gold</option>
+    `;
+  } else if (filters.system === "sits") {
+    // Tiers for SITS
+    els.filterType.innerHTML += `
+      <option value="common">Common</option>
+      <option value="rare">Rare</option>
+      <option value="ultra">Ultra</option>
+      <option value="credits">Credits</option>
+      <option value="ash">Ash</option>
+    `;
+  } else {
+    // "All" system - show combined options
+    els.filterType.innerHTML += `
+      <option value="bronze">Bronze (Chests)</option>
+      <option value="silver">Silver (Chests)</option>
+      <option value="gold">Gold (Chests)</option>
+      <option value="common">Common (SITS)</option>
+      <option value="rare">Rare (SITS)</option>
+      <option value="ultra">Ultra (SITS)</option>
+      <option value="credits">Credits</option>
+      <option value="ash">Ash</option>
+    `;
+  }
+
+  // Restore previous selection if still valid
+  const options = Array.from(els.filterType.options).map(o => o.value);
+  if (options.includes(currentValue)) {
+    els.filterType.value = currentValue;
+  } else {
+    els.filterType.value = "all";
+  }
+}
+
 function renderEventsTable() {
   const state = ensureDefaultState();
   const month = getSelectedMonth();
-  const monthEvents = state.events
+  const filters = getEventLogFilters();
+
+  let monthEvents = state.events
     .filter(e => e.month === month)
     .slice()
-    .sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.createdAt || "").localeCompare(b.createdAt || ""));
+    // Sort by most recent first (descending by date, then by createdAt)
+    .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+  // Apply system filter
+  if (filters.system !== "all") {
+    monthEvents = monthEvents.filter(e => e.system === filters.system);
+  }
+
+  // Apply type filter
+  if (filters.type !== "all") {
+    monthEvents = monthEvents.filter(e => {
+      if (filters.type === "ash") {
+        return e.resultType === "ash";
+      } else if (filters.type === "credits") {
+        return e.resultType === "credits";
+      } else if (["bronze", "silver", "gold"].includes(filters.type)) {
+        return e.system === "keys" && e.keyColor === filters.type;
+      } else if (["common", "rare", "ultra"].includes(filters.type)) {
+        return e.system === "sits" && e.sitsTier === filters.type;
+      }
+      return true;
+    });
+  }
 
   els.eventsTbody.innerHTML = "";
 
   if (!monthEvents.length) {
+    const filterNote = (filters.system !== "all" || filters.type !== "all") ? " matching current filters" : "";
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="6" class="subtle">No events logged for ${escapeHtml(month)}.</td>`;
+    tr.innerHTML = `<td colspan="6" class="subtle">No events${filterNote} for ${escapeHtml(month)}.</td>`;
     els.eventsTbody.appendChild(tr);
     return;
   }
@@ -928,7 +1012,7 @@ function renderEventsTable() {
     tr.innerHTML = `
       <td>${escapeHtml(e.date || "")}</td>
       <td>${escapeHtml(e.system || "")}</td>
-      <td>${escapeHtml(e.system === "keys" ? (e.keyColor || "") : "-")}</td>
+      <td>${escapeHtml(e.system === "keys" ? (e.keyColor || "") : (e.sitsTier || "-"))}</td>
       <td>${escapeHtml(e.resultType || "")}</td>
       <td>${escapeHtml(formatPrizeOrCredits(e))}</td>
       <td><button class="btn btn-danger btn-small" data-del="${escapeHtml(e.id)}">Delete</button></td>
@@ -1905,6 +1989,21 @@ function submitBulkSession() {
   // Prize gallery collapse
   els.prizeGalleryHeader.addEventListener("click", toggleGalleryCollapse);
   initGalleryCollapse();
+
+  // Event log filter listeners
+  if (els.filterSystem) {
+    els.filterSystem.addEventListener("change", () => {
+      updateFilterTypeOptions();
+      renderEventsTable();
+    });
+  }
+  if (els.filterType) {
+    els.filterType.addEventListener("change", () => {
+      renderEventsTable();
+    });
+  }
+  // Initialize filter type options
+  updateFilterTypeOptions();
 
   renderAll();
 
