@@ -93,14 +93,6 @@
       <div id="bulkSessionUI" class="bulk-session-ui" style="display: none;">
         <div class="bulk-session-header">
           <div class="field bulk-input-field">
-            <label for="bulkTotalKeys">Total Keys (optional)</label>
-            <div class="qty-stepper bulk-stepper">
-              <button type="button" class="qty-arrow qty-down" id="totalKeysDown" aria-label="Decrease">−</button>
-              <input id="bulkTotalKeys" type="number" min="0" placeholder="e.g., 200" />
-              <button type="button" class="qty-arrow qty-up" id="totalKeysUp" aria-label="Increase">+</button>
-            </div>
-          </div>
-          <div class="field bulk-input-field">
             <label for="bulkBatchTotal">Batch Total (opens)</label>
             <div class="qty-stepper bulk-stepper">
               <button type="button" class="qty-arrow qty-down" id="batchTotalDown" aria-label="Decrease">−</button>
@@ -110,7 +102,7 @@
           </div>
           <div class="bulk-session-stats">
             <div class="bulk-stat" id="remainingKeysStat" style="display: none;">
-              <span class="bulk-stat-label">Remaining Keys</span>
+              <span class="bulk-stat-label">SITS Remaining After Batch</span>
               <span class="bulk-stat-value" id="bulkRemainingKeys">0</span>
             </div>
             <div class="bulk-stat">
@@ -122,7 +114,16 @@
               <span class="bulk-stat-value" id="bulkInferredAsh">0</span>
             </div>
           </div>
+          <div class="field bulk-input-field">
+            <label for="bulkTotalKeys">Total SITS (optional)</label>
+            <div class="qty-stepper bulk-stepper">
+              <button type="button" class="qty-arrow qty-down" id="totalKeysDown" aria-label="Decrease">−</button>
+              <input id="bulkTotalKeys" type="number" min="0" placeholder="e.g., 200" />
+              <button type="button" class="qty-arrow qty-up" id="totalKeysUp" aria-label="Increase">+</button>
+            </div>
+          </div>
         </div>
+        <p class="subtle small" style="margin-top: 8px;">Note: Total SITS is only used if you are not opening every SITS that you have. If you are opening all of them, just use Batch Total.</p>
 
         <div id="bulkWarning" class="bulk-warning" style="display: none;">
           Wins exceed batch total! Ash will be set to 0.
