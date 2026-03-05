@@ -1216,11 +1216,13 @@ function renderSitsPrizeGallery(cfg) {
   const month = getSelectedMonth();
   // Convert "December 2025" to "December-2025" for filename
   const monthFileName = month.replace(" ", "-");
-  const imgPath = `./images/prizes/${monthFileName}-SITS.png`;
+  const imgPathPng = `./images/prizes/${monthFileName}-SITS.png`;
+  const imgPathGif = `./images/prizes/${monthFileName}-SITS.gif`;
 
+  // Try png first, fall back to gif, then show error
   els.prizeGallery.innerHTML = `
     <div class="prize-gallery-official">
-      <img src="${imgPath}" alt="${escapeHtml(month)} SITS Prizes" onerror="this.parentElement.innerHTML='<div class=\\'prize-gallery-empty\\'>No official image available for ${escapeHtml(month)}.</div>'" />
+      <img src="${imgPathPng}" alt="${escapeHtml(month)} SITS Prizes" onerror="this.onerror=function(){this.parentElement.innerHTML='<div class=\\'prize-gallery-empty\\'>No official image available for ${escapeHtml(month)}.</div>'};this.src='${imgPathGif}'" />
     </div>
   `;
 
@@ -1267,11 +1269,13 @@ function renderKeysPrizeGallery(cfg) {
   const month = getSelectedMonth();
   // Convert "December 2025" to "December-2025" for filename
   const monthFileName = month.replace(" ", "-");
-  const imgPath = `./images/prizes/${monthFileName}-Chests.png`;
+  const imgPathPng = `./images/prizes/${monthFileName}-Chests.png`;
+  const imgPathGif = `./images/prizes/${monthFileName}-Chests.gif`;
 
+  // Try png first, fall back to gif, then show error
   els.prizeGallery.innerHTML = `
     <div class="prize-gallery-official">
-      <img src="${imgPath}" alt="${escapeHtml(month)} Chest Prizes" onerror="this.parentElement.innerHTML='<div class=\\'prize-gallery-empty\\'>No official image available for ${escapeHtml(month)}.</div>'" />
+      <img src="${imgPathPng}" alt="${escapeHtml(month)} Chest Prizes" onerror="this.onerror=function(){this.parentElement.innerHTML='<div class=\\'prize-gallery-empty\\'>No official image available for ${escapeHtml(month)}.</div>'};this.src='${imgPathGif}'" />
     </div>
   `;
 

@@ -147,19 +147,19 @@ window.PRIZE_CONFIG = {
   "March 2026": {
     keys: {
       bronze: [
-        { id: "bronze_placeholder_1", name: "TBD" },
-        { id: "bronze_placeholder_2", name: "TBD" },
-        { id: "bronze_placeholder_3", name: "TBD" }
+        { id: "bronze_patch_of_daisies", name: "Patch of Daisies" },
+        { id: "bronze_patch_of_wildflowers", name: "Patch of Wildflowers" },
+        { id: "bronze_spring_flowers_dale", name: "Spring Flowers - Dale" }
       ],
       silver: [
-        { id: "silver_placeholder_1", name: "TBD" },
-        { id: "silver_placeholder_2", name: "TBD" },
-        { id: "silver_placeholder_3", name: "TBD" }
+        { id: "silver_spring_flowers_chip", name: "Spring Flowers - Chip" },
+        { id: "silver_garden_statue_winged_victory", name: "Garden Statue - Winged Victory" },
+        { id: "silver_abandoned_well", name: "Abandoned Well" }
       ],
       gold: [
-        { id: "gold_placeholder_1", name: "TBD" },
-        { id: "gold_placeholder_2", name: "TBD" },
-        { id: "gold_placeholder_3", name: "TBD" }
+        { id: "gold_spring_flowers_clarice", name: "Spring Flowers - Clarice" },
+        { id: "gold_aura_spring_sprites_butterflies", name: "Aura - Spring Sprite's Butterflies" },
+        { id: "gold_tranquil_fae_waterfall", name: "Tranquil Fae Waterfall" }
       ]
     },
     sits: {
