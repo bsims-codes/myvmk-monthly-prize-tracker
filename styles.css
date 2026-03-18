@@ -1452,6 +1452,24 @@ select:focus, input:focus{
   font-size: 11px;
 }
 
+.embed-sync-info {
+  margin-bottom: 12px;
+}
+
+.sync-info-banner {
+  background: linear-gradient(135deg, rgba(122, 162, 255, 0.15) 0%, rgba(94, 227, 155, 0.1) 100%);
+  border: 1px solid rgba(122, 162, 255, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.sync-info-banner strong {
+  color: var(--accent);
+}
+
 .embed-full-site-link {
   margin-top: 12px;
   padding-top: 10px;

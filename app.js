@@ -1924,8 +1924,20 @@ function setupEmbedMode() {
   const footer = document.querySelector('footer');
   if (footer) footer.style.display = 'none';
 
-  // Add "View Full Details" link at the bottom of quick add card
+  // Add sync info banner at the top of quick add card
   const quickAddCard = document.getElementById('quickAddCard');
+  if (quickAddCard && !quickAddCard.querySelector('.embed-sync-info')) {
+    const syncInfo = document.createElement('div');
+    syncInfo.className = 'embed-sync-info';
+    syncInfo.innerHTML = `
+      <div class="sync-info-banner">
+        💡 <strong>Tip:</strong> After adding prizes, click the <strong>💾 Save</strong> button in the panel header to sync with the main site.
+      </div>
+    `;
+    quickAddCard.insertBefore(syncInfo, quickAddCard.firstChild);
+  }
+
+  // Add "View Full Details" link at the bottom of quick add card
   if (quickAddCard && !quickAddCard.querySelector('.embed-full-site-link')) {
     const fullSiteLink = document.createElement('div');
     fullSiteLink.className = 'embed-full-site-link';
