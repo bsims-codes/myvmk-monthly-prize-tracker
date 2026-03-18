@@ -1283,3 +1283,78 @@ select:focus, input:focus{
   background: var(--border);
   margin: 4px 0;
 }
+
+/* ---------- Embed Mode (for browser extension iframe) ---------- */
+
+.embed-mode {
+  background: var(--bg);
+  min-height: auto;
+}
+
+.embed-mode .container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 12px;
+}
+
+.embed-mode header {
+  padding: 8px 0;
+}
+
+.embed-mode .system-toggle-bar {
+  margin-bottom: 8px;
+}
+
+.embed-mode .grid {
+  display: block;
+}
+
+.embed-mode .card {
+  margin-bottom: 0;
+  border-radius: 8px;
+}
+
+.embed-mode .card h2 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.embed-mode .subtle {
+  font-size: 11px;
+}
+
+.embed-mode .bulk-session-toggle-row {
+  padding: 8px 0;
+}
+
+.embed-mode .quick-btn {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.embed-mode .field label {
+  font-size: 11px;
+}
+
+.embed-full-site-link {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.embed-full-site-link a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+}
+
+.embed-full-site-link a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}

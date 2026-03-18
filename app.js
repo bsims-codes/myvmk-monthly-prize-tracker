@@ -119,6 +119,9 @@ function trackSummarySnapshot() {
 const STORAGE_KEY = "myvmk_prize_tracker_v1";
 const BULK_SESSION_KEY = "myvmk_bulk_session_v1";
 
+// Embed mode detection - used when loaded in an iframe (e.g., browser extension)
+const EMBED_MODE = new URLSearchParams(window.location.search).get('embed') === 'true';
+
 const els = {
   monthTabs: document.getElementById("monthTabs"),
   systemToggle: document.getElementById("systemToggle"),
@@ -1864,10 +1867,60 @@ function submitBulkSession() {
   alert(`Batch submitted: ${totalPrizesSubmitted > 0 ? totalPrizesSubmitted + " prizes, " : ""}${totalCreditsSubmitted > 0 ? totalCreditsSubmitted + " credit wins, " : ""}${inferredAsh} ash added.`);
 }
 
+/* ---------- Embed Mode Setup ---------- */
+
+function setupEmbedMode() {
+  if (!EMBED_MODE) return;
+
+  // Add embed class to body for CSS
+  document.body.classList.add('embed-mode');
+
+  // Hide header content (title, description)
+  const headerRow = document.querySelector('.header-row');
+  if (headerRow) headerRow.style.display = 'none';
+
+  // Hide month tabs (we'll auto-select current month)
+  if (els.monthTabs) els.monthTabs.style.display = 'none';
+
+  // Hide summary cards
+  if (els.summaryKeys) els.summaryKeys.closest('.card')?.style.setProperty('display', 'none');
+  if (els.summarySits) els.summarySits.closest('.card')?.style.setProperty('display', 'none');
+
+  // Hide available prizes gallery
+  if (els.availablePrizesCard) els.availablePrizesCard.style.display = 'none';
+
+  // Hide event log
+  if (els.eventLogCard) els.eventLogCard.style.display = 'none';
+
+  // Hide info section and footer
+  document.querySelectorAll('main.container.grid > section.card.span-2').forEach(section => {
+    if (section.querySelector('h2')?.textContent?.includes('How monthly')) {
+      section.style.display = 'none';
+    }
+  });
+  const footer = document.querySelector('footer');
+  if (footer) footer.style.display = 'none';
+
+  // Add "View Full Details" link at the bottom of quick add card
+  if (els.quickAddCard) {
+    const fullSiteLink = document.createElement('div');
+    fullSiteLink.className = 'embed-full-site-link';
+    fullSiteLink.innerHTML = `
+      <a href="https://bsims-codes.github.io/myvmk-monthly-prize-tracker/" target="_blank" rel="noopener">
+        📊 View Full Statistics & Details →
+      </a>
+    `;
+    els.quickAddCard.appendChild(fullSiteLink);
+  }
+}
+
 /* ---------- init ---------- */
 
 (function init() {
   const state = ensureDefaultState();
+
+  // Setup embed mode if loaded with ?embed=true
+  setupEmbedMode();
 
   // Initialize theme
   setTheme(getStoredTheme());
