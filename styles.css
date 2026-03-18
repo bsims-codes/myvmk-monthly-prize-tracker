@@ -1419,6 +1419,39 @@ select:focus, input:focus{
   font-size: 11px;
 }
 
+.embed-mode .bulk-credits-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.embed-mode .bulk-credits-section h4 {
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.embed-mode .bulk-credits-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.embed-mode .bulk-credits-grid .bulk-prize-item {
+  flex: 0 0 auto;
+  min-width: 90px;
+}
+
+.embed-mode .bulk-custom-credits {
+  margin-top: 8px;
+  gap: 6px;
+}
+
+.embed-mode .bulk-custom-credits input {
+  width: 70px;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
 .embed-full-site-link {
   margin-top: 12px;
   padding-top: 10px;
