@@ -1870,39 +1870,58 @@ function submitBulkSession() {
 /* ---------- Embed Mode Setup ---------- */
 
 function setupEmbedMode() {
-  if (!EMBED_MODE) return;
+  if (!EMBED_MODE) {
+    console.log('[Prize Tracker] Normal mode');
+    return;
+  }
+
+  console.log('[Prize Tracker] Embed mode activated');
 
   // Add embed class to body for CSS
   document.body.classList.add('embed-mode');
 
-  // Hide header content (title, description)
-  const headerRow = document.querySelector('.header-row');
-  if (headerRow) headerRow.style.display = 'none';
+  // Hide entire header except system toggle
+  const header = document.querySelector('header');
+  if (header) {
+    // Hide header row (title, description, theme toggle, menu)
+    const headerRow = header.querySelector('.header-row');
+    if (headerRow) headerRow.style.display = 'none';
 
-  // Hide month tabs (we'll auto-select current month)
-  if (els.monthTabs) els.monthTabs.style.display = 'none';
+    // Hide month tabs
+    const monthTabs = header.querySelector('.month-tabs');
+    if (monthTabs) monthTabs.style.display = 'none';
+  }
 
-  // Hide summary cards
-  if (els.summaryKeys) els.summaryKeys.closest('.card')?.style.setProperty('display', 'none');
-  if (els.summarySits) els.summarySits.closest('.card')?.style.setProperty('display', 'none');
+  // Hide summary cards by finding them directly
+  const summaryKeysCard = document.getElementById('summaryKeys')?.closest('.card');
+  if (summaryKeysCard) summaryKeysCard.style.display = 'none';
+
+  const summarySitsCard = document.getElementById('summarySits')?.closest('.card');
+  if (summarySitsCard) summarySitsCard.style.display = 'none';
 
   // Hide available prizes gallery
-  if (els.availablePrizesCard) els.availablePrizesCard.style.display = 'none';
+  const prizesCard = document.getElementById('availablePrizesCard');
+  if (prizesCard) prizesCard.style.display = 'none';
 
   // Hide event log
-  if (els.eventLogCard) els.eventLogCard.style.display = 'none';
+  const eventLogCard = document.getElementById('eventLogCard');
+  if (eventLogCard) eventLogCard.style.display = 'none';
 
-  // Hide info section and footer
-  document.querySelectorAll('main.container.grid > section.card.span-2').forEach(section => {
-    if (section.querySelector('h2')?.textContent?.includes('How monthly')) {
+  // Hide info section (How monthly prize updates work)
+  document.querySelectorAll('main section.card').forEach(section => {
+    const h2 = section.querySelector('h2');
+    if (h2 && h2.textContent.includes('How monthly')) {
       section.style.display = 'none';
     }
   });
+
+  // Hide footer
   const footer = document.querySelector('footer');
   if (footer) footer.style.display = 'none';
 
   // Add "View Full Details" link at the bottom of quick add card
-  if (els.quickAddCard) {
+  const quickAddCard = document.getElementById('quickAddCard');
+  if (quickAddCard && !quickAddCard.querySelector('.embed-full-site-link')) {
     const fullSiteLink = document.createElement('div');
     fullSiteLink.className = 'embed-full-site-link';
     fullSiteLink.innerHTML = `
@@ -1910,8 +1929,10 @@ function setupEmbedMode() {
         📊 View Full Statistics & Details →
       </a>
     `;
-    els.quickAddCard.appendChild(fullSiteLink);
+    quickAddCard.appendChild(fullSiteLink);
   }
+
+  console.log('[Prize Tracker] Embed mode setup complete');
 }
 
 /* ---------- init ---------- */
