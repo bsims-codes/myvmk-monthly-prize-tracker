@@ -1289,20 +1289,30 @@ select:focus, input:focus{
 .embed-mode {
   background: var(--bg);
   min-height: auto;
+  font-size: 13px;
 }
 
 .embed-mode .container {
   width: 100%;
   max-width: 100%;
-  padding: 0 12px;
+  padding: 0 10px;
 }
 
 .embed-mode header {
-  padding: 8px 0;
+  padding: 6px 0 4px 0;
 }
 
 .embed-mode .system-toggle-bar {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+}
+
+.embed-mode .system-toggle {
+  gap: 0;
+}
+
+.embed-mode .system-toggle-btn {
+  padding: 6px 16px;
+  font-size: 12px;
 }
 
 .embed-mode .grid {
@@ -1311,34 +1321,107 @@ select:focus, input:focus{
 
 .embed-mode .card {
   margin-bottom: 0;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 6px;
 }
 
 .embed-mode .card h2 {
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 13px;
+  margin-bottom: 6px;
 }
 
 .embed-mode .subtle {
-  font-size: 11px;
+  font-size: 10px;
+  margin-bottom: 6px;
 }
 
 .embed-mode .bulk-session-toggle-row {
-  padding: 8px 0;
-}
-
-.embed-mode .quick-btn {
-  padding: 8px 12px;
+  padding: 6px 0;
   font-size: 12px;
 }
 
+.embed-mode .toggle-label {
+  font-size: 12px;
+}
+
+.embed-mode .toggle-switch {
+  transform: scale(0.85);
+}
+
+.embed-mode .quick-buttons {
+  gap: 6px;
+}
+
+.embed-mode .quick-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+  min-width: auto;
+}
+
+.embed-mode .field {
+  margin-bottom: 8px;
+}
+
 .embed-mode .field label {
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+
+.embed-mode input,
+.embed-mode select {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.embed-mode .btn {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.embed-mode .key-color-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.embed-mode .qty-quick-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.embed-mode .credit-quick-btn {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.embed-mode .qty-stepper {
+  transform: scale(0.9);
+}
+
+.embed-mode .bulk-session-ui {
+  font-size: 12px;
+}
+
+.embed-mode .bulk-session-header {
+  gap: 8px;
+}
+
+.embed-mode .bulk-stats {
+  font-size: 11px;
+  padding: 6px;
+}
+
+.embed-mode .bulk-prize-list {
+  max-height: 120px;
+}
+
+.embed-mode .bulk-prize-item {
+  padding: 4px 6px;
   font-size: 11px;
 }
 
 .embed-full-site-link {
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
   text-align: center;
 }
@@ -1346,7 +1429,7 @@ select:focus, input:focus{
 .embed-full-site-link a {
   color: var(--accent);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
