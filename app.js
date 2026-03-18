@@ -1136,17 +1136,22 @@ function renderAll() {
   const isAllMonths = selectedMonth === "all";
 
   // Hide quick add, event log, and prize gallery for "All Months" view
+  // In embed mode, always hide event log and prize gallery
   els.quickAddCard.style.display = isAllMonths ? "none" : "block";
-  els.eventLogCard.style.display = isAllMonths ? "none" : "block";
-  els.availablePrizesCard.style.display = isAllMonths ? "none" : "block";
+  els.eventLogCard.style.display = (isAllMonths || EMBED_MODE) ? "none" : "block";
+  els.availablePrizesCard.style.display = (isAllMonths || EMBED_MODE) ? "none" : "block";
 
   if (!isAllMonths) {
     updateBulkSessionUI();
     renderQuickAdd();
-    renderEventsTable();
-    renderPrizeGallery();
+    if (!EMBED_MODE) {
+      renderEventsTable();
+      renderPrizeGallery();
+    }
   }
-  renderSummary();
+  if (!EMBED_MODE) {
+    renderSummary();
+  }
 }
 
 function pct(x) {
