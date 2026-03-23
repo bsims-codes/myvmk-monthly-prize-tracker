@@ -1411,7 +1411,8 @@ select:focus, input:focus{
 }
 
 .embed-mode .bulk-prize-list {
-  max-height: 120px;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 .embed-mode .bulk-prize-item {
