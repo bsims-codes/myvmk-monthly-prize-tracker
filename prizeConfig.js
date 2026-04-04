@@ -178,5 +178,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "April 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_apr26_1", name: "TBD" },
+        { id: "bronze_apr26_2", name: "TBD" },
+        { id: "bronze_apr26_3", name: "TBD" }
+      ],
+      silver: [
+        { id: "silver_apr26_1", name: "TBD" },
+        { id: "silver_apr26_2", name: "TBD" },
+        { id: "silver_apr26_3", name: "TBD" }
+      ],
+      gold: [
+        { id: "gold_apr26_1", name: "TBD" },
+        { id: "gold_apr26_2", name: "TBD" },
+        { id: "gold_apr26_3", name: "TBD" }
+      ]
+    },
+    sits: {
+      theme: "Disneyland Shanghai",
+      common: [
+        { id: "sits_dls_chips_sticky_rice", name: "Chip's Sticky Rice" },
+        { id: "sits_dls_daisys_soup_dumpling", name: "Daisy's Soup Dumpling" },
+        { id: "sits_dls_dales_sticky_rice", name: "Dale's Sticky Rice" },
+        { id: "sits_dls_hueys_soup_dumpling", name: "Huey's Soup Dumpling" }
+      ],
+      rare: [
+        { id: "sits_dls_goofys_soup_dumpling", name: "Goofy's Soup Dumpling" }
+      ],
+      ultra: [
+        { id: "sits_dls_ultra_1", name: "TBD" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
