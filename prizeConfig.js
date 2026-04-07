@@ -182,19 +182,19 @@ window.PRIZE_CONFIG = {
   "April 2026": {
     keys: {
       bronze: [
-        { id: "bronze_apr26_1", name: "TBD" },
-        { id: "bronze_apr26_2", name: "TBD" },
-        { id: "bronze_apr26_3", name: "TBD" }
+        { id: "bronze_apr26_tea_party_white_rabbit", name: "Tea Party - White Rabbit" },
+        { id: "bronze_apr26_diner_menu", name: "Diner Menu" },
+        { id: "bronze_apr26_grape_juice_flight", name: "Grape Juice Flight" }
       ],
       silver: [
-        { id: "silver_apr26_1", name: "TBD" },
-        { id: "silver_apr26_2", name: "TBD" },
-        { id: "silver_apr26_3", name: "TBD" }
+        { id: "silver_apr26_tea_party_alice", name: "Tea Party - Alice" },
+        { id: "silver_apr26_kitchen_blender", name: "Kitchen Blender" },
+        { id: "silver_apr26_kitchen_hood_vent", name: "Kitchen Hood Vent" }
       ],
       gold: [
-        { id: "gold_apr26_1", name: "TBD" },
-        { id: "gold_apr26_2", name: "TBD" },
-        { id: "gold_apr26_3", name: "TBD" }
+        { id: "gold_apr26_tea_party_mad_hatter", name: "Tea Party - Mad Hatter" },
+        { id: "gold_apr26_dueling_frying_pans_bacon_eggs", name: "Dueling Frying Pans - Bacon & Eggs" },
+        { id: "gold_apr26_aura_wonderland_cookies", name: "Aura - Wonderland Cookies" }
       ]
     },
     sits: {
