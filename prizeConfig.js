@@ -209,7 +209,7 @@ window.PRIZE_CONFIG = {
         { id: "sits_dls_goofys_soup_dumpling", name: "Goofy's Soup Dumpling" }
       ],
       ultra: [
-        { id: "sits_dls_ultra_1", name: "TBD" }
+        { id: "sits_dls_donalds_prawn_curry", name: "Donald's Prawn Curry" }
       ],
       creditsEnabled: true
     }
