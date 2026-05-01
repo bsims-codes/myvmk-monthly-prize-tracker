@@ -213,5 +213,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "May 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_may26_placeholder_1", name: "Bronze Prize 1 (TBD)" },
+        { id: "bronze_may26_placeholder_2", name: "Bronze Prize 2 (TBD)" },
+        { id: "bronze_may26_placeholder_3", name: "Bronze Prize 3 (TBD)" }
+      ],
+      silver: [
+        { id: "silver_may26_placeholder_1", name: "Silver Prize 1 (TBD)" },
+        { id: "silver_may26_placeholder_2", name: "Silver Prize 2 (TBD)" },
+        { id: "silver_may26_placeholder_3", name: "Silver Prize 3 (TBD)" }
+      ],
+      gold: [
+        { id: "gold_may26_stitch_hat_pirate", name: "Stitch Hat - Pirate" },
+        { id: "gold_may26_placeholder_2", name: "Gold Prize 2 (TBD)" },
+        { id: "gold_may26_placeholder_3", name: "Gold Prize 3 (TBD)" }
+      ]
+    },
+    sits: {
+      theme: "",
+      common: [
+        { id: "sits_may26_casey_jr", name: "Casey Jr" },
+        { id: "sits_may26_its_a_small_world", name: "It's A Small World" },
+        { id: "sits_may26_mad_tea_party", name: "Mad Tea Party" },
+        { id: "sits_may26_matterhorn", name: "Matterhorn" }
+      ],
+      rare: [
+        { id: "sits_may26_yavn", name: "Yavn" }
+      ],
+      ultra: [
+        { id: "sits_may26_ultra", name: "Ultra (TBD)" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
