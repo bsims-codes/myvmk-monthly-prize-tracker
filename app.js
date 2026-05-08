@@ -259,13 +259,31 @@ function ensureDefaultState() {
   return state;
 }
 
+const PRIZE_ID_MIGRATIONS = {
+  sits_may26_ultra: { id: "sits_may26_magic_invisibility", name: "Magic - Invisibility" }
+};
+
+function migratePrizeIds(parsed) {
+  let changed = false;
+  for (const ev of parsed.events) {
+    if (ev?.prize?.id && PRIZE_ID_MIGRATIONS[ev.prize.id]) {
+      const m = PRIZE_ID_MIGRATIONS[ev.prize.id];
+      ev.prize.id = m.id;
+      ev.prize.name = m.name;
+      changed = true;
+    }
+  }
+  if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+  return parsed;
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.events)) return null;
-    return parsed;
+    return migratePrizeIds(parsed);
   } catch {
     return null;
   }

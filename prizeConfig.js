@@ -244,7 +244,7 @@ window.PRIZE_CONFIG = {
         { id: "sits_may26_yavn", name: "Yavn" }
       ],
       ultra: [
-        { id: "sits_may26_ultra", name: "Ultra (TBD)" }
+        { id: "sits_may26_magic_invisibility", name: "Magic - Invisibility" }
       ],
       creditsEnabled: true
     }
