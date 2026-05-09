@@ -217,18 +217,18 @@ window.PRIZE_CONFIG = {
   "May 2026": {
     keys: {
       bronze: [
-        { id: "bronze_may26_placeholder_1", name: "Bronze Prize 1 (TBD)" },
-        { id: "bronze_may26_placeholder_2", name: "Bronze Prize 2 (TBD)" },
+        { id: "bronze_may26_pirates_treasure_small_rug_silver", name: "Pirate's Treasure Small Rug - Silver" },
+        { id: "bronze_may26_pirate_level_1_bronze_doubloon", name: "Pirate Level 1 Bronze Doubloon" },
         { id: "bronze_may26_placeholder_3", name: "Bronze Prize 3 (TBD)" }
       ],
       silver: [
-        { id: "silver_may26_placeholder_1", name: "Silver Prize 1 (TBD)" },
+        { id: "silver_may26_pirate_level_2_silver_piece", name: "Pirate Level 2 Silver Piece" },
         { id: "silver_may26_placeholder_2", name: "Silver Prize 2 (TBD)" },
         { id: "silver_may26_placeholder_3", name: "Silver Prize 3 (TBD)" }
       ],
       gold: [
         { id: "gold_may26_stitch_hat_pirate", name: "Stitch Hat - Pirate" },
-        { id: "gold_may26_placeholder_2", name: "Gold Prize 2 (TBD)" },
+        { id: "gold_may26_pirate_level_3_gold_sovereign", name: "Pirate Level 3 Gold Sovereign" },
         { id: "gold_may26_placeholder_3", name: "Gold Prize 3 (TBD)" }
       ]
     },
