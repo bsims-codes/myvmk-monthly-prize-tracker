@@ -219,17 +219,17 @@ window.PRIZE_CONFIG = {
       bronze: [
         { id: "bronze_may26_pirates_treasure_small_rug_silver", name: "Pirate's Treasure Small Rug - Silver" },
         { id: "bronze_may26_pirate_level_1_bronze_doubloon", name: "Pirate Level 1 Bronze Doubloon" },
-        { id: "bronze_may26_placeholder_3", name: "Bronze Prize 3 (TBD)" }
+        { id: "bronze_may26_pirates_treasure_small_rug_lavender", name: "Pirate's Treasure Small Rug - Lavender" }
       ],
       silver: [
         { id: "silver_may26_pirate_level_2_silver_piece", name: "Pirate Level 2 Silver Piece" },
-        { id: "silver_may26_placeholder_2", name: "Silver Prize 2 (TBD)" },
-        { id: "silver_may26_placeholder_3", name: "Silver Prize 3 (TBD)" }
+        { id: "silver_may26_ppr_tiny_pirate_ship", name: "PPR Tiny Pirate Ship" },
+        { id: "silver_may26_ppr_tiny_skull_rock", name: "PPR Tiny Skull Rock" }
       ],
       gold: [
         { id: "gold_may26_stitch_hat_pirate", name: "Stitch Hat - Pirate" },
         { id: "gold_may26_pirate_level_3_gold_sovereign", name: "Pirate Level 3 Gold Sovereign" },
-        { id: "gold_may26_placeholder_3", name: "Gold Prize 3 (TBD)" }
+        { id: "gold_may26_ppr_skull_rock", name: "PPR Skull Rock" }
       ]
     },
     sits: {
