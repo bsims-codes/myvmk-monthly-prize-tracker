@@ -279,7 +279,7 @@ window.PRIZE_CONFIG = {
         { id: "sits_jun26_cow_skull", name: "Cow Skull" }
       ],
       ultra: [
-        { id: "sits_jun26_moon_new", name: "Moon New" }
+        { id: "sits_jun26_moon", name: "Moon" }
       ],
       creditsEnabled: true
     }
