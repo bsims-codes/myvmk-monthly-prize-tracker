@@ -248,5 +248,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "June 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_jun26_royal_crown_king_stefan", name: "Royal Crown - King Stefan" },
+        { id: "bronze_jun26_enchanting_grom_fright_flat_1", name: "Enchanting Grom Fright Flat 1" },
+        { id: "bronze_jun26_enchanting_grom_fright_flat_2", name: "Enchanting Grom Fright Flat 2" }
+      ],
+      silver: [
+        { id: "silver_jun26_royal_crown_prince_naveen", name: "Royal Crown - Prince Naveen" },
+        { id: "silver_jun26_confetti_wood_floor", name: "Confetti Wood Floor" },
+        { id: "silver_jun26_pride_string_lights", name: "Pride String Lights" }
+      ],
+      gold: [
+        { id: "gold_jun26_placeholder_1", name: "Gold Prize 1 (TBD)" },
+        { id: "gold_jun26_placeholder_2", name: "Gold Prize 2 (TBD)" },
+        { id: "gold_jun26_placeholder_3", name: "Gold Prize 3 (TBD)" }
+      ]
+    },
+    sits: {
+      theme: "Grom",
+      common: [
+        { id: "sits_jun26_luz_help_me", name: "Luz, Help Me." },
+        { id: "sits_jun26_will_you_go_to_grom_with_me", name: "Will you go to Grom with me?" },
+        { id: "sits_jun26_flower", name: "Flower" },
+        { id: "sits_jun26_grom_balloon", name: "Grom Balloon" }
+      ],
+      rare: [
+        { id: "sits_jun26_cow_skull", name: "Cow Skull" }
+      ],
+      ultra: [
+        { id: "sits_jun26_moon_new", name: "Moon New" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
