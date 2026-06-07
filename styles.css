@@ -72,13 +72,24 @@ h2{ margin:0 0 12px 0; font-size: 18px; }
 
 .month-tabs{
   display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-top: 16px;
+}
+
+.month-tabs-row{
+  display: flex;
+  gap: 8px;
   padding: 4px;
   background: rgba(255,255,255,.03);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow-x: auto;
+  align-items: center;
+}
+
+.month-tabs-row.month-row:empty{
+  display: none;
 }
 
 .month-tab{
@@ -107,6 +118,24 @@ h2{ margin:0 0 12px 0; font-size: 18px; }
 
 [data-theme="light"] .month-tab.active{
   background: rgba(74,124,255,.15);
+}
+
+/* Year chips share month-tab base; the "All Months" chip and year row sit above the month row */
+.year-tab{
+  font-weight: 600;
+}
+
+.year-tab.active{
+  background: rgba(122,162,255,.18);
+  color: var(--text);
+}
+
+[data-theme="light"] .year-tab.active{
+  background: rgba(74,124,255,.15);
+}
+
+.year-row .all-tab{
+  margin-right: 4px;
 }
 
 /* ---------- System Toggle (Chests/SITS) ---------- */
@@ -1112,7 +1141,7 @@ select:focus, input:focus{
   .header-row{ flex-direction: column; }
   .header-actions{ justify-content:flex-start; }
   .credits-row{ flex-direction: column; align-items: stretch; }
-  .month-tabs{ flex-wrap: wrap; }
+  .month-tabs-row{ flex-wrap: wrap; }
   .bulk-session-header{ flex-direction: column; }
   .bulk-session-stats{ width: 100%; }
   .bulk-credits-custom{ flex-wrap: wrap; }

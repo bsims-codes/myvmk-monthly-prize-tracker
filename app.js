@@ -198,6 +198,7 @@ const els = {
 };
 
 let selectedMonth = null;
+let selectedYear = null;
 
 function todayISO() {
   const d = new Date();
@@ -361,6 +362,11 @@ function getMonthConfig(month) {
   return cfg[month] || null;
 }
 
+function yearOfMonthString(m) {
+  const p = parseMonthString(m);
+  return p ? p.year : null;
+}
+
 function buildMonthTabs(state) {
   const cfgMonths = getConfigMonths();
   const monthsSet = new Set(cfgMonths);
@@ -374,32 +380,10 @@ function buildMonthTabs(state) {
   }
 
   const allMonths = Array.from(monthsSet).sort(compareMonths);
-
-  els.monthTabs.innerHTML = "";
-
-  // Add "All Months" tab first
-  const allTab = document.createElement("button");
-  allTab.type = "button";
-  allTab.className = "month-tab";
-  allTab.dataset.month = "all";
-  allTab.textContent = "All Months";
-  allTab.addEventListener("click", () => selectMonth("all"));
-  els.monthTabs.appendChild(allTab);
-
-  for (const m of allMonths) {
-    const tab = document.createElement("button");
-    tab.type = "button";
-    tab.className = "month-tab";
-    tab.dataset.month = m;
-    tab.textContent = m;
-    tab.addEventListener("click", () => selectMonth(m));
-    els.monthTabs.appendChild(tab);
-  }
+  const currentMonth = monthFromDate(todayISO());
 
   // Set selected - prefer current month on fresh load
   const preferred = state.selectedMonth;
-  const currentMonth = monthFromDate(todayISO());
-
   if (preferred && (preferred === "all" || allMonths.includes(preferred))) {
     selectedMonth = preferred;
   } else if (currentMonth && allMonths.includes(currentMonth)) {
@@ -410,24 +394,92 @@ function buildMonthTabs(state) {
     selectedMonth = allMonths[allMonths.length - 1];
   }
 
+  // Distinct years present, oldest -> newest
+  const years = Array.from(new Set(allMonths.map(yearOfMonthString)))
+    .filter(y => y != null)
+    .sort((a, b) => a - b);
+
+  // Resolve which year's month chips to show. Only re-derive a default when the
+  // current selectedYear is unset/invalid, so an explicit year click is preserved.
+  if (selectedYear == null || !years.includes(selectedYear)) {
+    let dy = (selectedMonth !== "all") ? yearOfMonthString(selectedMonth) : null;
+    if (dy == null && currentMonth) dy = yearOfMonthString(currentMonth);
+    if (!years.includes(dy)) dy = years.length ? years[years.length - 1] : null;
+    selectedYear = dy;
+  }
+
+  renderMonthTabs(allMonths, years);
+}
+
+function renderMonthTabs(allMonths, years) {
+  els.monthTabs.innerHTML = "";
+
+  // Row 1: "All Months" + one chip per year
+  const yearRow = document.createElement("div");
+  yearRow.className = "month-tabs-row year-row";
+
+  const allTab = document.createElement("button");
+  allTab.type = "button";
+  allTab.className = "month-tab all-tab";
+  allTab.dataset.month = "all";
+  allTab.textContent = "All Months";
+  allTab.addEventListener("click", () => selectMonth("all"));
+  yearRow.appendChild(allTab);
+
+  for (const y of years) {
+    const yt = document.createElement("button");
+    yt.type = "button";
+    yt.className = "month-tab year-tab";
+    yt.dataset.year = String(y);
+    yt.textContent = String(y);
+    yt.addEventListener("click", () => selectYear(y));
+    yearRow.appendChild(yt);
+  }
+  els.monthTabs.appendChild(yearRow);
+
+  // Row 2: short month chips for the selected year only
+  const monthRow = document.createElement("div");
+  monthRow.className = "month-tabs-row month-row";
+  for (const m of allMonths.filter(mm => yearOfMonthString(mm) === selectedYear)) {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = "month-tab";
+    tab.dataset.month = m;
+    const p = parseMonthString(m);
+    tab.textContent = p ? MONTH_NAMES[p.monthIndex].slice(0, 3) : m;
+    tab.title = m;
+    tab.addEventListener("click", () => selectMonth(m));
+    monthRow.appendChild(tab);
+  }
+  els.monthTabs.appendChild(monthRow);
+
   updateActiveTab();
+}
+
+function selectYear(year) {
+  selectedYear = year;
+  // Year is a filter for the month row; data view (selectedMonth) is unchanged.
+  buildMonthTabs(ensureDefaultState());
+  trackEvent("select_year", { year });
 }
 
 function selectMonth(month) {
   selectedMonth = month;
+  if (month !== "all") {
+    const y = yearOfMonthString(month);
+    if (y != null) selectedYear = y;
+  }
   updateActiveTab();
   trackEvent("select_month", { month });
   renderAll();
 }
 
 function updateActiveTab() {
-  const tabs = els.monthTabs.querySelectorAll(".month-tab");
-  tabs.forEach(tab => {
-    if (tab.dataset.month === selectedMonth) {
-      tab.classList.add("active");
-    } else {
-      tab.classList.remove("active");
-    }
+  els.monthTabs.querySelectorAll(".month-tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.month != null && tab.dataset.month === selectedMonth);
+  });
+  els.monthTabs.querySelectorAll(".year-tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.year === String(selectedYear));
   });
 }
 
