@@ -283,5 +283,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "July 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_jul26_starfish_string_lights", name: "Starfish String Lights" },
+        { id: "bronze_jul26_nanis_surfboard", name: "Nani's Surfboard" },
+        { id: "bronze_jul26_lucas_daydream_green_fish", name: "Luca's Daydream - Green Fish" }
+      ],
+      silver: [
+        { id: "silver_jul26_lucas_daydream_blue_fish", name: "Luca's Daydream - Blue Fish" },
+        { id: "silver_jul26_animated_jellyfish", name: "Jellyfish - Animated" },
+        { id: "silver_jul26_kiddie_pool", name: "Kiddie Pool" }
+      ],
+      gold: [
+        { id: "gold_jul26_mount_lucas_vespa", name: "Mount - Luca's Vespa" },
+        { id: "gold_jul26_lucas_daydream_gold_fish", name: "Luca's Daydream - Gold Fish" },
+        { id: "gold_jul26_halo_lucas_daydream", name: "Halo - Luca's Daydream" }
+      ]
+    },
+    sits: {
+      theme: "Minnie Fruit",
+      common: [
+        { id: "sits_jul26_orange", name: "Orange" },
+        { id: "sits_jul26_pineapple", name: "Pineapple" },
+        { id: "sits_jul26_watermelon", name: "Watermelon" },
+        { id: "sits_jul26_blueberry", name: "Blueberry" }
+      ],
+      rare: [
+        { id: "sits_jul26_lemon", name: "Lemon" }
+      ],
+      ultra: [
+        { id: "sits_jul26_strawberry", name: "Strawberry" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
