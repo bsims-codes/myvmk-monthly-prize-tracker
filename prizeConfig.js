@@ -262,9 +262,9 @@ window.PRIZE_CONFIG = {
         { id: "silver_jun26_pride_string_lights", name: "Pride String Lights" }
       ],
       gold: [
-        { id: "gold_jun26_placeholder_1", name: "Gold Prize 1 (TBD)" },
-        { id: "gold_jun26_placeholder_2", name: "Gold Prize 2 (TBD)" },
-        { id: "gold_jun26_placeholder_3", name: "Gold Prize 3 (TBD)" }
+        { id: "gold_jun26_prom_photoshoot_set", name: "Prom Photoshoot Set" },
+        { id: "gold_jun26_royal_crown_prince_john", name: "Royal Crown - Prince John" },
+        { id: "gold_jun26_tiara_killer_queen", name: "Tiara - Killer Queen" }
       ]
     },
     sits: {
