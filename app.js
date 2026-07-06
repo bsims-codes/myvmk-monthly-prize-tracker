@@ -143,6 +143,7 @@ const els = {
   addAshBtn: document.getElementById("addAshBtn"),
   ashCountIndicator: document.getElementById("ashCountIndicator"),
   ashCountValue: document.getElementById("ashCountValue"),
+  ashCountLabel: document.getElementById("ashCountLabel"),
 
   summaryKeys: document.getElementById("summaryKeys"),
   summarySits: document.getElementById("summarySits"),
@@ -335,13 +336,27 @@ function updateAshCountIndicator() {
   const system = getSelectedSystem();
 
   // Count ash for current month and system
-  const ashCount = state.events.filter(e =>
+  const monthAsh = state.events.filter(e =>
     e.month === month &&
     e.system === system &&
     e.resultType === "ash"
-  ).length;
+  );
+  const ashCount = monthAsh.length;
 
-  els.ashCountValue.textContent = ashCount;
+  if (system === "keys") {
+    // Break out ash for the currently selected key color, plus the total
+    const color = getSelectedKeyColor();
+    const colorAsh = monthAsh.filter(e => e.keyColor === color).length;
+    els.ashCountValue.textContent = colorAsh;
+    if (els.ashCountLabel) {
+      els.ashCountLabel.textContent = `${capitalize(color)} Ash + ${ashCount} total chest ash`;
+    }
+  } else {
+    els.ashCountValue.textContent = ashCount;
+    if (els.ashCountLabel) {
+      els.ashCountLabel.textContent = "ash this month";
+    }
+  }
 }
 
 function updateCreditsTotalIndicator() {
