@@ -54,6 +54,10 @@
               Import Data
               <input id="importFile" type="file" accept="application/json" hidden />
             </label>
+            <button id="recoverBtn" class="dropdown-item">
+              <span class="dropdown-icon">🛟</span>
+              Recover Data
+            </button>
             <div class="dropdown-divider"></div>
             <button id="resetBtn" class="dropdown-item dropdown-item-danger">
               <span class="dropdown-icon">🗑️</span>
@@ -73,6 +77,10 @@
       </div>
     </div>
   </header>
+
+  <div class="container">
+    <div id="syncBanner" class="sync-banner" style="display: none;"></div>
+  </div>
 
   <main class="container grid">
     <section class="card span-2" id="quickAddCard">

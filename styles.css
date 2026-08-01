@@ -1522,3 +1522,39 @@ select:focus, input:focus{
   opacity: 0.8;
   text-decoration: underline;
 }
+
+/* ---------- Cloud backup status banner ---------- */
+
+.sync-banner{
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sync-banner.warn{
+  border-color: rgba(255,200,102,.55);
+  background: rgba(255,200,102,.10);
+  color: var(--text);
+}
+
+.sync-banner strong{ color: var(--text); }
+
+.link-btn{
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-btn:hover{ opacity: .8; }

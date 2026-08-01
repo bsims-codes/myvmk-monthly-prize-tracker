@@ -248,6 +248,17 @@ function ensureDefaultState() {
   const existing = loadState();
   if (existing) return existing;
 
+  // Never create-and-save a fresh empty state on top of a store we failed to read.
+  // loadState() quarantines unreadable data first; if anything is still parked in
+  // localStorage under the main key, refuse to overwrite it.
+  const leftover = localStorage.getItem(STORAGE_KEY);
+  if (leftover) {
+    throw new Error(
+      "Refusing to overwrite unreadable tracker data. A copy has been quarantined - " +
+      "use Recover Data in the menu before continuing."
+    );
+  }
+
   const months = getConfigMonths();
   const defaultMonth = months.length ? months[months.length - 1] : monthFromDate(todayISO()) || "2025-01";
 
@@ -257,7 +268,7 @@ function ensureDefaultState() {
     selectedMonth: defaultMonth,
     events: [] // immutable event log
   };
-  saveState(state);
+  saveState(state, { allowShrink: true, reason: "initial state" });
   return state;
 }
 
@@ -279,20 +290,208 @@ function migratePrizeIds(parsed) {
   return parsed;
 }
 
-function loadState() {
+/* ---------- Data safety ----------
+   Three failures cost real data here, so each one is guarded:
+   1. An unreadable store used to be silently replaced by an empty one. Now the raw
+      bytes are quarantined under a timestamped key and nothing is overwritten.
+   2. A write that shrinks the event log is blocked unless the caller explicitly
+      asked for it (reset / delete month / replace-import), so no code path can
+      quietly drop months.
+   3. A snapshot of the last good state is kept so any mistake is reversible.
+*/
+
+const SNAPSHOT_KEY = "myvmk_prize_tracker_snapshot_v1";
+const META_KEY = "myvmk_prize_tracker_meta_v1";
+const CORRUPT_PREFIX = "myvmk_prize_tracker_corrupt_";
+const SNAPSHOT_MIN_INTERVAL_MS = 6 * 60 * 60 * 1000; // refresh the safety copy at most every 6h
+
+// Auto-sync state lives up here because saveState() (below) calls scheduleAutoSync(),
+// which runs during the very first ensureDefaultState() - before the cloud-sync
+// section further down has been evaluated. Declaring these later puts them in the
+// temporal dead zone and breaks the first save on a fresh browser.
+const LAST_SYNC_KEY = "myvmk_last_sync_at";
+const AUTO_SYNC_DEBOUNCE_MS = 20 * 1000;
+const SYNC_STALE_DAYS = 3;
+
+let autoSyncTimer = null;
+let syncInFlight = false;
+let pendingChanges = false;
+
+function quarantineRawState(raw, why) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.events)) return null;
-    return migratePrizeIds(parsed);
+    const key = `${CORRUPT_PREFIX}${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    localStorage.setItem(key, raw);
+    console.error(`[tracker] Quarantined unreadable data (${why}) under ${key}`);
+    return key;
+  } catch (e) {
+    console.error("[tracker] Could not quarantine unreadable data:", e);
+    return null;
+  }
+}
+
+function readMeta() {
+  try {
+    const m = JSON.parse(localStorage.getItem(META_KEY) || "null");
+    return m && typeof m.count === "number" ? m : null;
   } catch {
     return null;
   }
 }
 
-function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function writeMeta(count) {
+  try {
+    localStorage.setItem(META_KEY, JSON.stringify({ count, savedAt: new Date().toISOString() }));
+  } catch {
+    /* meta is advisory only */
+  }
+}
+
+// Keep one rollback copy of a known-good state.
+function writeSnapshot(state, reason, force) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "null");
+    if (!force && existing && existing.savedAt) {
+      const age = Date.now() - new Date(existing.savedAt).getTime();
+      if (age < SNAPSHOT_MIN_INTERVAL_MS) return;
+      // Never let a newer, smaller snapshot replace a larger older one automatically.
+      if ((existing.state?.events?.length || 0) > state.events.length) return;
+    }
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      reason: reason || "auto",
+      eventCount: state.events.length,
+      state
+    }));
+  } catch (e) {
+    console.warn("[tracker] Snapshot skipped:", e?.name || e);
+  }
+}
+
+function loadSnapshot() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "null");
+    return s && s.state && Array.isArray(s.state.events) ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (e) {
+    const key = quarantineRawState(raw, "JSON parse failed");
+    alert(
+      "Your tracker data could not be read and was NOT overwritten.\n\n" +
+      "A copy has been saved" + (key ? ` as ${key}` : "") + ". Use \"Recover Data\" " +
+      "in the menu to restore from a snapshot or backup."
+    );
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.events)) {
+    const key = quarantineRawState(raw, "unexpected shape");
+    alert(
+      "Your tracker data was in an unexpected format and was NOT overwritten.\n\n" +
+      "A copy has been saved" + (key ? ` as ${key}` : "") + ". Use \"Recover Data\" in the menu."
+    );
+    return null;
+  }
+
+  writeSnapshot(parsed, "load");
+  return migratePrizeIds(parsed);
+}
+
+/* saveState(state, opts)
+   opts.allowShrink - caller intends to remove events (reset, delete month, replace import)
+   opts.reason      - shown in warnings / snapshot metadata
+*/
+function saveState(state, opts = {}) {
+  const incoming = Array.isArray(state.events) ? state.events.length : 0;
+  const meta = readMeta();
+
+  if (!opts.allowShrink && meta && incoming < meta.count) {
+    const lost = meta.count - incoming;
+    writeSnapshot(state, "pre-shrink", false);
+    const msg =
+      `Blocked a write that would have removed ${lost} event(s) ` +
+      `(${meta.count} -> ${incoming}).` + (opts.reason ? ` Source: ${opts.reason}.` : "");
+    console.error("[tracker] " + msg);
+    alert(
+      "Data-loss guard triggered.\n\n" + msg +
+      "\n\nNothing was deleted. If you meant to remove data, use Delete Month or Reset."
+    );
+    return false;
+  }
+
+  // Before any destructive write, snapshot what is currently stored - the useful
+  // rollback copy is the state we are about to lose, not the one replacing it.
+  if (opts.allowShrink) {
+    try {
+      const prevRaw = localStorage.getItem(STORAGE_KEY);
+      if (prevRaw) {
+        const prev = JSON.parse(prevRaw);
+        if (prev && Array.isArray(prev.events) && prev.events.length > incoming) {
+          writeSnapshot(prev, opts.reason ? `before ${opts.reason}` : "before destructive write", true);
+        }
+      }
+    } catch {
+      /* if the previous value is unreadable there is nothing worth snapshotting */
+    }
+  }
+
+  const payload = JSON.stringify(state);
+  try {
+    localStorage.setItem(STORAGE_KEY, payload);
+  } catch (e) {
+    // Out of space: drop the snapshot to make room, then retry once.
+    const isQuota = e && (e.name === "QuotaExceededError" || e.code === 22 || e.code === 1014);
+    if (isQuota) {
+      try {
+        localStorage.removeItem(SNAPSHOT_KEY);
+        localStorage.setItem(STORAGE_KEY, payload);
+        console.warn("[tracker] Storage full - dropped snapshot to complete the save.");
+        alert(
+          "Browser storage is nearly full. Your data was saved, but the local safety " +
+          "snapshot had to be discarded.\n\nExport a backup now (menu > Export)."
+        );
+        writeMeta(incoming);
+        return true;
+      } catch (e2) {
+        console.error("[tracker] Save failed even after pruning:", e2);
+        alert(
+          "COULD NOT SAVE - browser storage is full.\n\n" +
+          "Your most recent changes are only in this tab. A backup file will download now; " +
+          "keep it safe and re-import it after clearing space."
+        );
+        try { downloadStateBackup(state); } catch { /* best effort */ }
+        return false;
+      }
+    }
+    console.error("[tracker] Save failed:", e);
+    alert("Could not save your data: " + (e?.message || e));
+    return false;
+  }
+
+  writeMeta(incoming);
+  scheduleAutoSync();
+  return true;
+}
+
+function downloadStateBackup(state, label) {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `myvmk-prize-tracker-${label || "emergency"}-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function getSelectedMonth() {
@@ -1122,20 +1321,45 @@ function deleteEvent(id) {
   const idx = state.events.findIndex(e => e.id === id);
   if (idx === -1) return;
   state.events.splice(idx, 1);
-  saveState(state);
+  saveState(state, { allowShrink: true, reason: "delete single event" });
   renderAll();
 }
 
 function deleteSelectedMonth() {
   const state = ensureDefaultState();
   const month = getSelectedMonth();
-  const before = state.events.length;
+
+  if (month === "all") {
+    alert("Select a specific month before deleting.");
+    return;
+  }
+
+  const doomed = state.events.filter(e => e.month === month).length;
+  if (doomed === 0) {
+    alert(`There is nothing logged for ${month}.`);
+    return;
+  }
+
+  // This used to delete instantly on a single click. Deleting a whole month is
+  // irreversible, so require the month name to be typed back.
+  const typed = prompt(
+    `This permanently deletes all ${doomed} event(s) logged for ${month}.\n\n` +
+    `A local snapshot is kept, but this cannot be undone from the cloud backup.\n\n` +
+    `Type the month name exactly to confirm:\n${month}`
+  );
+  if (typed === null) return;
+  if (typed.trim().toLowerCase() !== month.toLowerCase()) {
+    alert("Month name did not match. Nothing was deleted.");
+    return;
+  }
+
+  writeSnapshot(state, `before deleting ${month}`, true);
   state.events = state.events.filter(e => e.month !== month);
-  const removed = before - state.events.length;
-  saveState(state);
-  trackEvent("delete_month", { month, events_deleted: removed });
+  if (!saveState(state, { allowShrink: true, reason: `delete month ${month}` })) return;
+
+  trackEvent("delete_month", { month, events_deleted: doomed });
   renderAll();
-  alert(`Deleted ${removed} event(s) for ${month}.`);
+  alert(`Deleted ${doomed} event(s) for ${month}.`);
 }
 
 function exportData() {
@@ -1168,23 +1392,57 @@ function importData(file) {
       imported.version = imported.version || 1;
       imported.selectedMonth = imported.selectedMonth || (getConfigMonths().slice(-1)[0] || "2025-01");
 
-      // Optional: merge vs replace. MVP: ask, then do it.
-      const doMerge = confirm("Import mode:\nOK = Merge with existing data\nCancel = Replace existing data");
       const current = ensureDefaultState();
 
+      // The old prompt was "OK = Merge / Cancel = Replace", so pressing Cancel or Esc
+      // to back out destroyed everything. Cancel now means cancel; replacing takes
+      // a second, explicit confirmation.
+      const merge = confirm(
+        `Import ${imported.events.length} event(s)?\n\n` +
+        `OK = Merge with your existing ${current.events.length} event(s) (recommended)\n` +
+        `Cancel = show replace/cancel options`
+      );
+
       let next;
-      if (doMerge) {
+      let mode;
+      if (merge) {
         const seen = new Set(current.events.map(e => e.id));
         const merged = current.events.slice();
         for (const ev of imported.events) {
           if (ev && ev.id && !seen.has(ev.id)) merged.push(ev);
         }
         next = { ...current, events: merged };
+        mode = "merge";
       } else {
+        const replace = confirm(
+          `REPLACE ALL DATA?\n\n` +
+          `OK = discard your current ${current.events.length} event(s) and keep only the ` +
+          `${imported.events.length} imported one(s)\n` +
+          `Cancel = abort the import and change nothing`
+        );
+        if (!replace) {
+          alert("Import cancelled. Nothing changed.");
+          return;
+        }
+        const losing = current.events.length - imported.events.length;
+        if (losing > 0) {
+          const typed = prompt(
+            `Replacing loses ${losing} event(s) that are not in the imported file.\n\n` +
+            `Type REPLACE to confirm:`
+          );
+          if (typed === null || typed.trim().toUpperCase() !== "REPLACE") {
+            alert("Import cancelled. Nothing changed.");
+            return;
+          }
+        }
+        try { downloadStateBackup(current, "before-import-replace"); } catch { /* best effort */ }
+        writeSnapshot(current, "before replace-import", true);
         next = imported;
+        mode = "replace";
       }
 
-      saveState(next);
+      const doMerge = mode === "merge";
+      if (!saveState(next, { allowShrink: mode === "replace", reason: `import (${mode})` })) return;
       buildMonthTabs(next);
       renderAll();
       trackEvent("import_data", {
@@ -1202,10 +1460,29 @@ function importData(file) {
 }
 
 function resetAll() {
-  const ok = confirm("This will delete ALL local tracker data in this browser. Continue?");
+  const state = ensureDefaultState();
+  const count = state.events.length;
+
+  const ok = confirm(
+    `This will delete ALL ${count} logged event(s) in this browser.\n\n` +
+    `A backup file will download first, and a local snapshot is kept.\n\nContinue?`
+  );
   if (!ok) return;
-  trackEvent("reset_data");
+
+  const typed = prompt(`Type DELETE to erase all ${count} event(s):`);
+  if (typed === null) return;
+  if (typed.trim().toUpperCase() !== "DELETE") {
+    alert("Not confirmed. Your data is untouched.");
+    return;
+  }
+
+  // Always leave the user something to come back to.
+  try { downloadStateBackup(state, "before-reset"); } catch { /* best effort */ }
+  writeSnapshot(state, "before reset", true);
+
+  trackEvent("reset_data", { events_deleted: count });
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(META_KEY);
   ensureDefaultState();
   renderAll();
 }
@@ -2039,7 +2316,7 @@ function setupEmbedMode() {
 
 /* ---------- init ---------- */
 
-(function init() {
+function init() {
   const state = ensureDefaultState();
 
   // Setup embed mode if loaded with ?embed=true
@@ -2189,7 +2466,48 @@ function setupEmbedMode() {
 
   // Initialize analytics tracking
   trackPageLoad();
-})();
+}
+
+// If the store is unreadable, ensureDefaultState() refuses to overwrite it and throws.
+// Show a recovery screen rather than a blank page, and never touch the data.
+try {
+  init();
+} catch (err) {
+  console.error("[tracker] Startup halted to protect your data:", err);
+  const main = document.querySelector("main") || document.body;
+  const panel = document.createElement("section");
+  panel.className = "card span-2";
+  panel.innerHTML = `
+    <h2>Your data needs attention</h2>
+    <p>The tracker could not read your saved data, so it stopped instead of overwriting it.
+       <strong>Nothing has been deleted.</strong></p>
+    <p class="subtle small">${escapeHtml(String(err && err.message || err))}</p>
+    <p><button id="startupRecoverBtn" class="btn">Download all recoverable copies</button></p>
+  `;
+  main.prepend(panel);
+  const btn = document.getElementById("startupRecoverBtn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const keys = Object.keys(localStorage).filter(
+        k => k === STORAGE_KEY || k === SNAPSHOT_KEY || k.startsWith(CORRUPT_PREFIX)
+      );
+      for (const k of keys) {
+        try {
+          const blob = new Blob([localStorage.getItem(k)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${k}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } catch (e) { console.error("[tracker] Could not export " + k, e); }
+      }
+      alert(`Downloaded ${keys.length} file(s). Keep them safe before making any changes.`);
+    });
+  }
+}
 
 /* ---------- Cloud Sync (GitHub Gist) ---------- */
 
@@ -2409,18 +2727,118 @@ function mergeStates(local, remote) {
   };
 }
 
+/* ---------- Automatic sync ----------
+   Sync used to fire only when "Sync Now" was clicked, so a four-month gap in the
+   cloud backup went unnoticed. It now runs on load, shortly after any change, and
+   when the tab is hidden or closed.
+*/
+
+function getLastSyncAt() {
+  const v = localStorage.getItem(LAST_SYNC_KEY);
+  return v ? new Date(v) : null;
+}
+
+function markSynced() {
+  localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
+  pendingChanges = false;
+  renderSyncBanner();
+}
+
+function scheduleAutoSync() {
+  pendingChanges = true;
+
+  // Everything that reads cloud-sync settings is deferred into timers. saveState()
+  // can run during the first ensureDefaultState(), while the rest of this file is
+  // still being evaluated, so touching those bindings synchronously would throw.
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(() => {
+    autoSyncTimer = null;
+    const { token, gistId } = loadGitHubSettings();
+    if (!token || !gistId) {
+      renderSyncBanner();
+      return;
+    }
+    performSync({ silent: true });
+  }, AUTO_SYNC_DEBOUNCE_MS);
+
+  setTimeout(renderSyncBanner, 0);
+}
+
+// Warn in the UI whenever the cloud backup is stale or unconfigured.
+function renderSyncBanner() {
+  const el = document.getElementById("syncBanner");
+  if (!el) return;
+
+  const { token, gistId } = loadGitHubSettings();
+  if (!token || !gistId) {
+    el.className = "sync-banner warn";
+    el.innerHTML = `<strong>No cloud backup.</strong> Your data lives only in this browser. ` +
+      `<button type="button" class="link-btn" id="syncBannerSetup">Set up sync</button>`;
+    el.style.display = "block";
+    const b = document.getElementById("syncBannerSetup");
+    if (b) b.addEventListener("click", showCloudSyncModal);
+    return;
+  }
+
+  const last = getLastSyncAt();
+  if (!last) {
+    el.className = "sync-banner warn";
+    el.textContent = "Cloud backup configured but never synced yet.";
+    el.style.display = "block";
+    return;
+  }
+
+  const days = (Date.now() - last.getTime()) / 86400000;
+  if (days >= SYNC_STALE_DAYS) {
+    el.className = "sync-banner warn";
+    el.textContent = `Last cloud backup was ${Math.floor(days)} day(s) ago - sync may be failing.`;
+    el.style.display = "block";
+    return;
+  }
+
+  if (pendingChanges) {
+    el.className = "sync-banner";
+    el.textContent = "Unsaved changes will back up shortly...";
+    el.style.display = "block";
+    return;
+  }
+
+  el.style.display = "none";
+}
+
+function flushPendingSync() {
+  if (!pendingChanges) return;
+  const { token, gistId } = loadGitHubSettings();
+  if (!token || !gistId) return;
+  if (autoSyncTimer) {
+    clearTimeout(autoSyncTimer);
+    autoSyncTimer = null;
+  }
+  performSync({ silent: true });
+}
+
 async function syncWithGitHub() {
+  return performSync({ silent: false });
+}
+
+async function performSync({ silent } = {}) {
   const settings = loadGitHubSettings();
 
   if (!settings.token) {
+    if (silent) return;
     alert("Please configure your GitHub token first.");
     showCloudSyncModal();
     return;
   }
 
+  if (syncInFlight) return;
+  syncInFlight = true;
+
   try {
-    cloudEls.syncNow.disabled = true;
-    cloudEls.syncNow.textContent = "Syncing...";
+    if (cloudEls.syncNow) {
+      cloudEls.syncNow.disabled = true;
+      cloudEls.syncNow.textContent = "Syncing...";
+    }
 
     const localState = ensureDefaultState();
     let mergedState = localState;
@@ -2431,14 +2849,21 @@ async function syncWithGitHub() {
         const remoteState = await fetchGist(settings.token, settings.gistId);
         mergedState = mergeStates(localState, remoteState);
 
+        // Merging only ever adds events, so a shrink here means something is wrong.
+        if (mergedState.events.length < localState.events.length) {
+          throw new Error("Merge produced fewer events than are stored locally - sync aborted.");
+        }
+
         // Save merged state locally
-        saveState(mergedState);
+        saveState(mergedState, { reason: "cloud sync merge" });
 
         // Update Gist with merged state
         await updateGist(settings.token, settings.gistId, mergedState);
 
-        cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
-        cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Complete!</strong><br><span class="subtle small">Last synced: ${new Date().toLocaleString()}</span>`;
+        if (cloudEls.cloudSyncStatus) {
+          cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
+          cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Complete!</strong><br><span class="subtle small">Last synced: ${new Date().toLocaleString()}</span>`;
+        }
       } catch (error) {
         throw new Error(`Failed to sync with existing Gist: ${error.message}`);
       }
@@ -2447,29 +2872,42 @@ async function syncWithGitHub() {
       const newGistId = await createNewGist(settings.token, localState);
       saveGitHubSettings(settings.token, newGistId);
 
-      cloudEls.gistId.value = newGistId;
-      cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
-      cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Complete!</strong><br><span class="subtle small">New Gist created: ${escapeHtml(newGistId)}<br>Last synced: ${new Date().toLocaleString()}</span>`;
+      if (cloudEls.gistId) cloudEls.gistId.value = newGistId;
+      if (cloudEls.cloudSyncStatus) {
+        cloudEls.cloudSyncStatus.className = "cloud-sync-status success";
+        cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Complete!</strong><br><span class="subtle small">New Gist created: ${escapeHtml(newGistId)}<br>Last synced: ${new Date().toLocaleString()}</span>`;
+      }
     }
+
+    markSynced();
 
     // Refresh UI
     renderAll();
 
     trackEvent("cloud_sync_success", {
       is_new_gist: !settings.gistId,
-      event_count: mergedState.events.length
+      event_count: mergedState.events.length,
+      automatic: !!silent
     });
     updateUserProperties();
 
-    alert("Sync successful! Your data has been backed up to GitHub.");
+    if (!silent) alert("Sync successful! Your data has been backed up to GitHub.");
   } catch (error) {
-    cloudEls.cloudSyncStatus.className = "cloud-sync-status error";
-    cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Failed</strong><br><span class="subtle small">${escapeHtml(error.message)}</span>`;
-    trackEvent("cloud_sync_error", { error_message: error.message });
-    alert(`Sync failed: ${error.message}`);
+    if (cloudEls.cloudSyncStatus) {
+      cloudEls.cloudSyncStatus.className = "cloud-sync-status error";
+      cloudEls.cloudSyncStatus.innerHTML = `<strong>Sync Failed</strong><br><span class="subtle small">${escapeHtml(error.message)}</span>`;
+    }
+    trackEvent("cloud_sync_error", { error_message: error.message, automatic: !!silent });
+    // A silent failure must still be visible somewhere, hence the banner.
+    console.error("[tracker] Sync failed:", error);
+    renderSyncBanner();
+    if (!silent) alert(`Sync failed: ${error.message}`);
   } finally {
-    cloudEls.syncNow.disabled = false;
-    cloudEls.syncNow.textContent = "Sync Now";
+    syncInFlight = false;
+    if (cloudEls.syncNow) {
+      cloudEls.syncNow.disabled = false;
+      cloudEls.syncNow.textContent = "Sync Now";
+    }
   }
 }
 
@@ -2521,6 +2959,80 @@ if (cloudEls.syncNow) {
 if (cloudEls.clearCloudSyncSettings) {
   cloudEls.clearCloudSyncSettings.addEventListener("click", clearCloudSyncSettingsHandler);
 }
+
+/* ---------- Auto-sync wiring ---------- */
+
+// Back up on load so a fresh browser/profile pulls remote data down immediately.
+(function initAutoSync() {
+  renderSyncBanner();
+  const { token, gistId } = loadGitHubSettings();
+  if (!token || !gistId) return;
+  setTimeout(() => performSync({ silent: true }), 1500);
+})();
+
+// Don't let a closing tab take unsynced changes with it.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") flushPendingSync();
+});
+window.addEventListener("pagehide", flushPendingSync);
+
+// Periodic safety net for long sessions.
+setInterval(() => {
+  if (pendingChanges) flushPendingSync();
+  renderSyncBanner();
+}, 5 * 60 * 1000);
+
+/* ---------- Recovery ---------- */
+
+function recoverData() {
+  const current = ensureDefaultState();
+  const snap = loadSnapshot();
+  const corruptKeys = Object.keys(localStorage).filter(k => k.startsWith(CORRUPT_PREFIX));
+
+  const lines = [
+    `Current data: ${current.events.length} event(s).`,
+    snap
+      ? `Local snapshot: ${snap.eventCount} event(s), saved ${new Date(snap.savedAt).toLocaleString()} (${snap.reason}).`
+      : `Local snapshot: none.`,
+    corruptKeys.length ? `Quarantined copies: ${corruptKeys.length}.` : `Quarantined copies: none.`,
+    ``,
+    `OK = download every available copy as files (safe, changes nothing)`,
+    `Cancel = close`
+  ];
+
+  if (!confirm(lines.join("\n"))) return;
+
+  try { downloadStateBackup(current, "current"); } catch { /* best effort */ }
+
+  if (snap) {
+    try { downloadStateBackup(snap.state, "snapshot"); } catch { /* best effort */ }
+  }
+
+  for (const k of corruptKeys) {
+    try {
+      const raw = localStorage.getItem(k);
+      const blob = new Blob([raw], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${k}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch { /* best effort */ }
+  }
+
+  trackEvent("recover_data", { snapshot: !!snap, quarantined: corruptKeys.length });
+  alert(
+    "Downloaded every copy found.\n\n" +
+    "To restore one, use Import and choose Merge - it only adds events back, " +
+    "so nothing you still have can be lost."
+  );
+}
+
+const recoverBtn = document.getElementById("recoverBtn");
+if (recoverBtn) recoverBtn.addEventListener("click", recoverData);
 
 /* ---------- Hamburger Menu Toggle ---------- */
 
