@@ -346,8 +346,12 @@ function writeMeta(count) {
   }
 }
 
+// Set once storage proves too tight for a second copy, so we stop thrashing.
+let snapshotsDisabled = false;
+
 // Keep one rollback copy of a known-good state.
 function writeSnapshot(state, reason, force) {
+  if (snapshotsDisabled) return;
   try {
     const existing = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "null");
     if (!force && existing && existing.savedAt) {
@@ -363,6 +367,10 @@ function writeSnapshot(state, reason, force) {
       state
     }));
   } catch (e) {
+    if (e && (e.name === "QuotaExceededError" || e.code === 22 || e.code === 1014)) {
+      snapshotsDisabled = true;
+      try { localStorage.removeItem(SNAPSHOT_KEY); } catch { /* nothing else to do */ }
+    }
     console.warn("[tracker] Snapshot skipped:", e?.name || e);
   }
 }
@@ -452,12 +460,16 @@ function saveState(state, opts = {}) {
     const isQuota = e && (e.name === "QuotaExceededError" || e.code === 22 || e.code === 1014);
     if (isQuota) {
       try {
+        snapshotsDisabled = true;
         localStorage.removeItem(SNAPSHOT_KEY);
         localStorage.setItem(STORAGE_KEY, payload);
         console.warn("[tracker] Storage full - dropped snapshot to complete the save.");
-        alert(
-          "Browser storage is nearly full. Your data was saved, but the local safety " +
-          "snapshot had to be discarded.\n\nExport a backup now (menu > Export)."
+        // Non-blocking: this fires during ordinary saves, and a modal here would
+        // freeze the page on every load.
+        notify(
+          "Browser storage is nearly full - the local safety snapshot was discarded. " +
+          "Your data is saved, but export a backup from the menu.",
+          "warn"
         );
         writeMeta(incoming);
         return true;
@@ -478,8 +490,22 @@ function saveState(state, opts = {}) {
   }
 
   writeMeta(incoming);
-  scheduleAutoSync();
+  // opts.skipSync: this write did not change the event log (or is the result of a
+  // sync). Arming auto-sync here would make every sync schedule another one.
+  if (!opts.skipSync) scheduleAutoSync();
   return true;
+}
+
+/* Non-blocking message shown in the banner strip.
+   Anything that can fire during load or an automatic save must use this rather
+   than alert() - a native dialog blocks the renderer until it is dismissed.
+*/
+let notifyMessage = null;
+
+function notify(message, level) {
+  notifyMessage = message ? { message, level: level || "" } : null;
+  console.warn("[tracker] " + message);
+  try { renderSyncBanner(); } catch { /* banner may not exist yet */ }
 }
 
 function downloadStateBackup(state, label) {
@@ -1489,10 +1515,11 @@ function resetAll() {
 
 function renderAll() {
   const state = ensureDefaultState();
-  // Keep state.selectedMonth aligned with UI selection
-  if (selectedMonth) {
+  // Keep state.selectedMonth aligned with UI selection. This is a UI preference,
+  // not a data change, so it must not arm a cloud sync on every render.
+  if (selectedMonth && state.selectedMonth !== selectedMonth) {
     state.selectedMonth = selectedMonth;
-    saveState(state);
+    saveState(state, { skipSync: true });
   }
 
   const isAllMonths = selectedMonth === "all";
@@ -2769,6 +2796,14 @@ function renderSyncBanner() {
   const el = document.getElementById("syncBanner");
   if (!el) return;
 
+  // A storage/save problem outranks sync status.
+  if (notifyMessage) {
+    el.className = "sync-banner " + (notifyMessage.level || "");
+    el.textContent = notifyMessage.message;
+    el.style.display = "block";
+    return;
+  }
+
   const { token, gistId } = loadGitHubSettings();
   if (!token || !gistId) {
     el.className = "sync-banner warn";
@@ -2854,8 +2889,9 @@ async function performSync({ silent } = {}) {
           throw new Error("Merge produced fewer events than are stored locally - sync aborted.");
         }
 
-        // Save merged state locally
-        saveState(mergedState, { reason: "cloud sync merge" });
+        // Save merged state locally. skipSync: we are already inside a sync, and
+        // arming another one here would loop forever.
+        saveState(mergedState, { reason: "cloud sync merge", skipSync: true });
 
         // Update Gist with merged state
         await updateGist(settings.token, settings.gistId, mergedState);
