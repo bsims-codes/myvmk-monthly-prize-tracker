@@ -318,5 +318,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "August 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_aug26_wave_carpet_1x1", name: "Wave Carpet 1x1" },
+        { id: "bronze_aug26_wave_floor_carpet_1x1", name: "Wave Floor Carpet 1x1" },
+        { id: "bronze_aug26_summer_treat_snow_white", name: "Summer Treat - Snow White" }
+      ],
+      silver: [
+        { id: "silver_aug26_summer_treat_jasmine", name: "Summer Treat - Jasmine" },
+        { id: "silver_aug26_wave_carpet_2x2", name: "Wave Carpet 2x2" },
+        { id: "silver_aug26_wave_floor_carpet_2x2", name: "Wave Floor Carpet 2x2" }
+      ],
+      gold: [
+        { id: "gold_aug26_summer_treat_aurora", name: "Summer Treat - Aurora" },
+        { id: "gold_aug26_costume_squirt", name: "Costume - Squirt" },
+        { id: "gold_aug26_mount_mayday_fountain", name: "Mount Mayday Fountain" }
+      ]
+    },
+    sits: {
+      theme: "Blizzard Beach Series",
+      common: [
+        { id: "sits_aug26_holiday_in_the_sun", name: "Holiday in the Sun" },
+        { id: "sits_aug26_mickey", name: "Mickey" },
+        { id: "sits_aug26_mickey_and_minnie", name: "Mickey & Minnie" },
+        { id: "sits_aug26_snow_much_fun", name: "Snow Much Fun" }
+      ],
+      rare: [
+        { id: "sits_aug26_blizzard_beach", name: "Blizzard Beach" }
+      ],
+      ultra: [
+        { id: "sits_aug26_minnie", name: "Minnie" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
