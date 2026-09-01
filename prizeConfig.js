@@ -353,5 +353,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "September 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_sep26_placeholder_1", name: "Bronze Prize 1 (TBA)" },
+        { id: "bronze_sep26_placeholder_2", name: "Bronze Prize 2 (TBA)" },
+        { id: "bronze_sep26_placeholder_3", name: "Bronze Prize 3 (TBA)" }
+      ],
+      silver: [
+        { id: "silver_sep26_placeholder_1", name: "Silver Prize 1 (TBA)" },
+        { id: "silver_sep26_placeholder_2", name: "Silver Prize 2 (TBA)" },
+        { id: "silver_sep26_placeholder_3", name: "Silver Prize 3 (TBA)" }
+      ],
+      gold: [
+        { id: "gold_sep26_room_pin_circus_tent", name: "Room Pin - Circus Tent" },
+        { id: "gold_sep26_aura_ring_of_fire", name: "Aura - Ring of Fire" },
+        { id: "gold_sep26_balloon_dog_blue", name: "Balloon Dog - Blue" }
+      ]
+    },
+    sits: {
+      theme: "",
+      common: [
+        { id: "sits_sep26_placeholder_common_1", name: "Common 1 (TBA)" },
+        { id: "sits_sep26_placeholder_common_2", name: "Common 2 (TBA)" },
+        { id: "sits_sep26_placeholder_common_3", name: "Common 3 (TBA)" },
+        { id: "sits_sep26_placeholder_common_4", name: "Common 4 (TBA)" }
+      ],
+      rare: [
+        { id: "sits_sep26_placeholder_rare", name: "Rare (TBA)" }
+      ],
+      ultra: [
+        { id: "sits_sep26_placeholder_ultra", name: "Ultra Rare (TBA)" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
