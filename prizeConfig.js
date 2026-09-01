@@ -373,10 +373,10 @@ window.PRIZE_CONFIG = {
       ]
     },
     sits: {
-      theme: "",
+      theme: "Carousel Fantasia",
       common: [
-        { id: "sits_sep26_placeholder_common_1", name: "Common 1 (TBA)" },
-        { id: "sits_sep26_placeholder_common_2", name: "Common 2 (TBA)" },
+        { id: "sits_sep26_green_winged", name: "Green Winged" },
+        { id: "sits_sep26_blue_winged", name: "Blue Winged" },
         { id: "sits_sep26_placeholder_common_3", name: "Common 3 (TBA)" },
         { id: "sits_sep26_placeholder_common_4", name: "Common 4 (TBA)" }
       ],
