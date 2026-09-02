@@ -357,14 +357,14 @@ window.PRIZE_CONFIG = {
   "September 2026": {
     keys: {
       bronze: [
-        { id: "bronze_sep26_placeholder_1", name: "Bronze Prize 1 (TBA)" },
-        { id: "bronze_sep26_placeholder_2", name: "Bronze Prize 2 (TBA)" },
-        { id: "bronze_sep26_placeholder_3", name: "Bronze Prize 3 (TBA)" }
+        { id: "bronze_sep26_balloon_dog_red", name: "Balloon Dog - Red" },
+        { id: "bronze_sep26_lamp_post", name: "Lamp Post (name TBA)" },
+        { id: "bronze_sep26_dice", name: "Dice (name TBA)" }
       ],
       silver: [
-        { id: "silver_sep26_placeholder_1", name: "Silver Prize 1 (TBA)" },
-        { id: "silver_sep26_placeholder_2", name: "Silver Prize 2 (TBA)" },
-        { id: "silver_sep26_placeholder_3", name: "Silver Prize 3 (TBA)" }
+        { id: "silver_sep26_balloon_dog_yellow", name: "Balloon Dog - Yellow" },
+        { id: "silver_sep26_holdable_pt_fleas_matchstick", name: "Holdable - PT Flea's Matchstick" },
+        { id: "silver_sep26_circus_flag_banner", name: "Circus Flag Banner (name TBA)" }
       ],
       gold: [
         { id: "gold_sep26_room_pin_circus_tent", name: "Room Pin - Circus Tent" },
@@ -375,16 +375,16 @@ window.PRIZE_CONFIG = {
     sits: {
       theme: "Carousel Fantasia",
       common: [
-        { id: "sits_sep26_green_winged", name: "Green Winged" },
         { id: "sits_sep26_blue_winged", name: "Blue Winged" },
-        { id: "sits_sep26_placeholder_common_3", name: "Common 3 (TBA)" },
-        { id: "sits_sep26_placeholder_common_4", name: "Common 4 (TBA)" }
+        { id: "sits_sep26_yellow_winged", name: "Yellow Winged" },
+        { id: "sits_sep26_orange_winged", name: "Orange Winged" },
+        { id: "sits_sep26_green_winged", name: "Green Winged" }
       ],
       rare: [
-        { id: "sits_sep26_placeholder_rare", name: "Rare (TBA)" }
+        { id: "sits_sep26_white_winged", name: "White Winged" }
       ],
       ultra: [
-        { id: "sits_sep26_placeholder_ultra", name: "Ultra Rare (TBA)" }
+        { id: "sits_sep26_pink_winged", name: "Pink Winged" }
       ],
       creditsEnabled: true
     }
