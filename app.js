@@ -276,13 +276,44 @@ const PRIZE_ID_MIGRATIONS = {
   sits_may26_ultra: { id: "sits_may26_magic_invisibility", name: "Magic - Invisibility" }
 };
 
+// Map of prize id -> the display name the config currently uses for it. SITS names
+// carry the theme prefix, matching what addPrizeEvent / bulk entry store on events.
+function buildCanonicalPrizeNames() {
+  const names = {};
+  const cfg = window.PRIZE_CONFIG || {};
+  for (const month of Object.values(cfg)) {
+    for (const list of Object.values(month?.keys || {})) {
+      for (const p of list || []) if (p?.id) names[p.id] = p.name;
+    }
+    const sits = month?.sits;
+    if (sits) {
+      const theme = sits.theme;
+      for (const tier of ["common", "rare", "ultra"]) {
+        for (const p of sits[tier] || []) {
+          if (p?.id) names[p.id] = theme ? `${theme} ${p.name}` : p.name;
+        }
+      }
+    }
+  }
+  return names;
+}
+
 function migratePrizeIds(parsed) {
   let changed = false;
+  const canonical = buildCanonicalPrizeNames();
   for (const ev of parsed.events) {
-    if (ev?.prize?.id && PRIZE_ID_MIGRATIONS[ev.prize.id]) {
+    if (!ev?.prize?.id) continue;
+    if (PRIZE_ID_MIGRATIONS[ev.prize.id]) {
       const m = PRIZE_ID_MIGRATIONS[ev.prize.id];
       ev.prize.id = m.id;
       ev.prize.name = m.name;
+      changed = true;
+    }
+    // Events snapshot the prize name when logged; refresh it so renames in
+    // prizeConfig.js (e.g. replacing a "name TBA" placeholder) reach the Summary.
+    const current = canonical[ev.prize.id];
+    if (current && ev.prize.name !== current) {
+      ev.prize.name = current;
       changed = true;
     }
   }
