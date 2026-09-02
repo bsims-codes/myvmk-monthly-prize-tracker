@@ -358,13 +358,13 @@ window.PRIZE_CONFIG = {
     keys: {
       bronze: [
         { id: "bronze_sep26_balloon_dog_red", name: "Balloon Dog - Red" },
-        { id: "bronze_sep26_lamp_post", name: "Lamp Post (name TBA)" },
-        { id: "bronze_sep26_dice", name: "Dice (name TBA)" }
+        { id: "bronze_sep26_lamp_post", name: "Storybook Circus Lamppost" },
+        { id: "bronze_sep26_dice", name: "A Bug's Life - Dice Chair" }
       ],
       silver: [
         { id: "silver_sep26_balloon_dog_yellow", name: "Balloon Dog - Yellow" },
         { id: "silver_sep26_holdable_pt_fleas_matchstick", name: "Holdable - PT Flea's Matchstick" },
-        { id: "silver_sep26_circus_flag_banner", name: "Circus Flag Banner (name TBA)" }
+        { id: "silver_sep26_circus_flag_banner", name: "Storybook Circus Sign" }
       ],
       gold: [
         { id: "gold_sep26_room_pin_circus_tent", name: "Room Pin - Circus Tent" },
