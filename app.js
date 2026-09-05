@@ -276,6 +276,16 @@ const PRIZE_ID_MIGRATIONS = {
   sits_may26_ultra: { id: "sits_may26_magic_invisibility", name: "Magic - Invisibility" }
 };
 
+// Retired prize ids whose events are known duplicates. The September 2026 SITS
+// commons were first logged against "Common 1/2 (TBA)" placeholders; once the real
+// names landed the counts were re-entered under Blue Winged / Green Winged, so the
+// placeholder events are a second copy of wins that are already recorded. They are
+// dropped on load, otherwise the Summary lists both.
+const RETIRED_PRIZE_IDS = new Set([
+  "sits_sep26_placeholder_common_1",
+  "sits_sep26_placeholder_common_2"
+]);
+
 // Map of prize id -> the display name the config currently uses for it. SITS names
 // carry the theme prefix, matching what addPrizeEvent / bulk entry store on events.
 function buildCanonicalPrizeNames() {
@@ -317,6 +327,18 @@ function migratePrizeIds(parsed) {
       changed = true;
     }
   }
+  const kept = parsed.events.filter(ev => !RETIRED_PRIZE_IDS.has(ev?.prize?.id));
+  const dropped = parsed.events.length - kept.length;
+  if (dropped > 0) {
+    parsed.events = kept;
+    // Goes through saveState so the pre-removal snapshot and the event-count meta
+    // both stay in step; a raw setItem here would trip the shrink guard on the next
+    // ordinary save.
+    console.warn(`[tracker] Removed ${dropped} duplicate event(s) for retired prize ids.`);
+    saveState(parsed, { allowShrink: true, reason: "retired prize id cleanup" });
+    return parsed;
+  }
+
   if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
   return parsed;
 }
