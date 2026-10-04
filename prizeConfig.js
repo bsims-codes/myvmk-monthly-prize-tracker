@@ -388,5 +388,40 @@ window.PRIZE_CONFIG = {
       ],
       creditsEnabled: true
     }
+  },
+  "October 2026": {
+    keys: {
+      bronze: [
+        { id: "bronze_oct26_small_spiderweb_butterfly", name: "Small Spiderweb Butterfly" },
+        { id: "bronze_oct26_maleficents_fireball", name: "Maleficent's Fireball" },
+        { id: "bronze_oct26_spiderweb_butterfly_bronze", name: "Spiderweb Butterfly - Bronze" }
+      ],
+      silver: [
+        { id: "silver_oct26_spiderweb_butterfly_silver", name: "Spiderweb Butterfly - Silver" },
+        { id: "silver_oct26_large_spiderweb_butterfly", name: "Large Spiderweb Butterfly" },
+        { id: "silver_oct26_hades_fireball", name: "Hades' Fireball" }
+      ],
+      gold: [
+        { id: "gold_oct26_spiderweb_butterfly_gold", name: "Spiderweb Butterfly - Gold" },
+        { id: "gold_oct26_trick_or_treasure_chest", name: "Trick or Treasure Chest" },
+        { id: "gold_oct26_wings_haunted_butterfly", name: "Wings - Haunted Butterfly" }
+      ]
+    },
+    sits: {
+      theme: "Cutie NBC",
+      common: [
+        { id: "sits_oct26_sally", name: "Sally" },
+        { id: "sits_oct26_jack_skellington", name: "Jack Skellington" },
+        { id: "sits_oct26_mayor", name: "Mayor" },
+        { id: "sits_oct26_vampire_teddy", name: "Vampire Teddy" }
+      ],
+      rare: [
+        { id: "sits_oct26_zero", name: "Zero" }
+      ],
+      ultra: [
+        { id: "sits_oct26_oogie_boogie", name: "Oogie Boogie" }
+      ],
+      creditsEnabled: true
+    }
   }
 };
